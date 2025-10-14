@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useUser } from './hooks/useUser';
 import { View } from './types';
@@ -8,9 +7,10 @@ import { Dashboard } from './components/Dashboard';
 import { LearnSection } from './components/LearnSection';
 import { PracticeEngine } from './components/PracticeEngine';
 import { Leaderboard } from './components/Leaderboard';
+import { VerificationScreen } from './components/VerificationScreen';
 
 const App: React.FC = () => {
-    const { user, loading, login, signUp, logout, updateUserScore } = useUser();
+    const { user, loading, login, signUp, logout, updateUserScore, sendVerificationEmail, reloadUser } = useUser();
     const [view, setView] = useState<View>(View.DASHBOARD);
     const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -60,7 +60,16 @@ const App: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">טוען...</div>;
+        return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">טוען...</div>;
+    }
+
+    if (user && !user.emailVerified) {
+        return <VerificationScreen 
+                    user={user} 
+                    sendVerificationEmail={sendVerificationEmail}
+                    reloadUser={reloadUser}
+                    logout={logout}
+                />;
     }
 
     if (!user) {

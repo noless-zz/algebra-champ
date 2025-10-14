@@ -1,53 +1,84 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+// FIX: Remove v9 firestore imports. The query is now built using the v8 compat API.
+// import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import type { User } from '../types';
 import { TrophyIcon } from './icons';
-
-// Mock data, in a real app this would come from Firestore
-const MOCK_LEADERBOARD_USERS: Omit<User, 'email'>[] = [
-    { uid: 'user-1', username: 'גאון_האלגברה', score: 2540, completedExercises: 254 },
-    { uid: 'user-2', username: 'פותר_הכל', score: 2310, completedExercises: 231 },
-    { uid: 'user-3', username: 'מלכת_המשוואות', score: 2180, completedExercises: 218 },
-    { uid: 'user-4', username: 'x=42', score: 1950, completedExercises: 195 },
-    { uid: 'user-5', username: 'פרופסור_פילוג', score: 1760, completedExercises: 176 },
-    { uid: 'user-6', username: 'סופר_סטודנט', score: 1520, completedExercises: 152 },
-    { uid: 'user-7', username: 'מתמטיקאי_מתחיל', score: 1230, completedExercises: 123 },
-    { uid: 'user-8', username: 'מחשבון_אנושי', score: 980, completedExercises: 98 },
-    { uid: 'user-9', username: 'שחקן_רציני', score: 750, completedExercises: 75 },
-    { uid: 'user-10', username: 'לומד_בכיף', score: 510, completedExercises: 51 },
-];
 
 interface LeaderboardProps {
     currentUser: User;
     setView: (view: any) => void;
 }
 
+type LeaderboardUser = Omit<User, 'email' | 'emailVerified'>;
+
 export const Leaderboard: React.FC<LeaderboardProps> = ({ currentUser, setView }) => {
+    const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardUser[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                // FIX: Use v8 compat firestore API to query the collection.
+                const usersCollectionRef = collection(db, 'algebra-users');
+                const q = query(usersCollectionRef, orderBy('score', 'desc'), limit(10));
+                const querySnapshot = await getDocs(q);
+                const users: LeaderboardUser[] = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    users.push({
+                        uid: data.uid,
+                        username: data.username,
+                        score: data.score,
+                        completedExercises: data.completedExercises,
+                    });
+                });
+                setLeaderboardUsers(users);
+            } catch (error) {
+                console.error("Error fetching leaderboard: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLeaderboard();
+    }, []);
 
     const rankedUsers = useMemo(() => {
-        const users = [...MOCK_LEADERBOARD_USERS];
-        // Ensure current user is on the list if not already
-        if (!users.some(u => u.uid === currentUser.uid)) {
-            users.push(currentUser);
+        const users = [...leaderboardUsers];
+        
+        let currentUserOnBoard = users.find(u => u.uid === currentUser.uid);
+
+        if (currentUserOnBoard) {
+             // Update score from current user state in case it's more recent than the fetch
+            currentUserOnBoard.score = currentUser.score;
+            currentUserOnBoard.completedExercises = currentUser.completedExercises;
         } else {
-            // Update current user's score on the list
-            const userIndex = users.findIndex(u => u.uid === currentUser.uid);
-            if(userIndex !== -1) {
-                users[userIndex] = currentUser;
-            }
+             users.push({
+                uid: currentUser.uid,
+                username: currentUser.username,
+                score: currentUser.score,
+                completedExercises: currentUser.completedExercises
+            });
         }
         
         users.sort((a, b) => b.score - a.score);
 
-        const currentUserRank = users.findIndex(u => u.uid === currentUser.uid) + 1;
         const top10 = users.slice(0, 10);
-        
-        // If current user is not in top 10, add them to the list for context
+        const currentUserRank = users.findIndex(u => u.uid === currentUser.uid) + 1;
         const isCurrentUserInTop10 = top10.some(u => u.uid === currentUser.uid);
         
         return { top10, currentUserRank, isCurrentUserInTop10 };
-    }, [currentUser]);
+    }, [currentUser, leaderboardUsers]);
 
+    if (loading) {
+        return (
+            <div className="container mx-auto p-6 text-center">
+                <p>טוען את טבלת המובילים...</p>
+            </div>
+        )
+    }
 
     return (
         <div className="container mx-auto p-6">
@@ -71,7 +102,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentUser, setView }
                     ))}
                 </div>
 
-                {!rankedUsers.isCurrentUserInTop10 && (
+                {!rankedUsers.isCurrentUserInTop10 && rankedUsers.currentUserRank > 0 && (
                     <>
                         <div className="text-center my-4 font-bold text-slate-500">...</div>
                         <div className="flex items-center p-4 rounded-lg bg-primary-100 dark:bg-primary-900/50 border-2 border-primary-500 scale-105">

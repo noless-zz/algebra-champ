@@ -1,3 +1,5 @@
+// FIX: Import `ReactNode` to resolve the "Cannot find namespace 'React'" error.
+import type { ReactNode } from 'react';
 
 export interface User {
   uid: string;
@@ -5,6 +7,7 @@ export interface User {
   username: string;
   score: number;
   completedExercises: number;
+  emailVerified: boolean;
 }
 
 export enum View {
@@ -45,7 +48,7 @@ export interface Question {
   id: string;
   topic: Topic;
   type: QuestionType;
-  questionText: string | React.ReactNode;
+  questionText: string | ReactNode;
   answerFormat: AnswerFormat;
   options?: string[]; // For multiple choice
   correctAnswer: string;

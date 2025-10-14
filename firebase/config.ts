@@ -1,13 +1,6 @@
-
-// In a real application, this file would initialize Firebase.
-// For this project, we are mocking the Firebase functionality.
-
-// Example of what would be here:
-
-// FIX: Switched to Firebase v8 compat imports to resolve module export errors.
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
-import "firebase/compat/firestore";
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { initializeFirestore, CACHE_SIZE_UNLIMITED, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA3UIywHgeGTrJAcuVKqZqpfBO_N5Vf4ws",
@@ -19,21 +12,24 @@ const firebaseConfig = {
   measurementId: "G-D1F9H37DJX"
 };
 
+// Initialize Firebase, ensuring it's only done once.
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
 
-// FIX: Use v8 compat initialization to fix initializeApp error.
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-// FIX: Use v8 compat to get auth and firestore instances.
-export const auth = firebase.auth();
-export const db = firebase.firestore();
-
-// Enable offline persistence
-// FIX: Use v8 compat API for persistence.
-db.enablePersistence().catch((err) => {
-    if (err.code == 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time.
-    } else if (err.code == 'unimplemented') {
-        // The current browser does not support all of the features required to enable persistence
-    }
+// Initialize Firestore with settings for offline persistence and cache size.
+const db = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
 });
+
+// Enable multi-tab persistence to keep data in sync across tabs and support offline.
+enableMultiTabIndexedDbPersistence(db)
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore persistence initialization failed: Another tab might be open.', err);
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence is not supported in this browser.', err);
+    }
+  });
+
+
+export { auth, db, app };

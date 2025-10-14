@@ -1,70 +1,73 @@
-
 import React from 'react';
-import { View } from '../types';
-import type { User } from '../types';
-import { BookOpenIcon, SwordIcon, TrophyIcon } from './icons';
+import { View as ViewEnum } from '../types.ts';
+import { LearnIcon, PracticeIcon, LeaderboardIcon, StarIcon } from './icons.tsx';
 
-interface DashboardProps {
-  user: User;
-  setView: (view: View) => void;
-}
-
-const StatCard: React.FC<{ label: string; value: string | number; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex items-center gap-4">
-    <div className="bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 p-3 rounded-full">
-      {icon}
+const StatCard = ({ Icon, label, value, color }) => (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center gap-4">
+        <div className={`p-3 rounded-full ${color}`}>
+            <Icon className="h-7 w-7 text-white" />
+        </div>
+        <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        </div>
     </div>
-    <div>
-      <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{value}</div>
-    </div>
-  </div>
 );
 
-const NavCard: React.FC<{ title: string; description: string; icon: React.ReactNode; onClick: () => void; }> = ({ title, description, icon, onClick }) => (
-  <button
-    onClick={onClick}
-    className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transform transition-all duration-300 text-right group"
-  >
-    <div className="flex items-center gap-4 mb-2">
-      <div className="text-primary-500 group-hover:text-primary-400 transition-colors">{icon}</div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h3>
+const ActionCard = ({ Icon, title, description, buttonText, onClick, color }) => (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex flex-col items-start gap-4 transition-transform transform hover:-translate-y-1">
+        <div className={`p-3 rounded-full ${color}`}>
+            <Icon className="h-8 w-8 text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
+        <p className="text-gray-600 dark:text-gray-300 flex-grow">{description}</p>
+        <button onClick={onClick} className={`w-full mt-2 ${color} text-white font-bold py-2 px-4 rounded-lg transition-opacity hover:opacity-90`}>
+            {buttonText}
+        </button>
     </div>
-    <p className="text-slate-500 dark:text-slate-400">{description}</p>
-  </button>
 );
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, setView }) => {
+
+// Fix: Replaced JSX.Element with React.ReactElement to resolve "Cannot find namespace 'JSX'" error.
+export default function Dashboard({ user, onNavigate }) {
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-2">ברוך שובך, {user.username}!</h2>
-      <p className="text-slate-500 dark:text-slate-400 mb-8">מוכנים לאתגר את המוח?</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <StatCard label="ניקוד כולל" value={user.score.toLocaleString()} icon={<TrophyIcon className="w-8 h-8"/>} />
-        <StatCard label="תרגילים שהושלמו" value={user.completedExercises} icon={<SwordIcon className="w-8 h-8"/>} />
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">שלום, {user.username}!</h2>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">מוכן לחדד את כישורי האלגברה שלך?</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <StatCard Icon={StarIcon} label="ניקוד כולל" value={user.score} color="bg-indigo-500" />
+          <StatCard Icon={PracticeIcon} label="תרגילים שהושלמו" value={user.completedExercises} color="bg-green-500" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <NavCard 
-          title="מרכז למידה"
-          description="רעננו את הידע שלכם עם הסברים ודוגמאות אינטראקטיביות."
-          icon={<BookOpenIcon className="w-10 h-10"/>}
-          onClick={() => setView(View.LEARN)}
+        <ActionCard
+            Icon={LearnIcon}
+            title="מרכז למידה"
+            description="למד ורענן את הידע שלך בסדר פעולות חשבון, חוק הפילוג ונוסחאות הכפל המקוצר."
+            buttonText="מעבר ללמידה"
+            onClick={() => onNavigate(ViewEnum.Learn)}
+            color="bg-blue-500"
         />
-        <NavCard 
-          title="זירת אימונים"
-          description="תרגלו את מה שלמדתם עם שאלות מאתגרות וצברו נקודות."
-          icon={<SwordIcon className="w-10 h-10"/>}
-          onClick={() => setView(View.PRACTICE)}
+        <ActionCard
+            Icon={PracticeIcon}
+            title="אימון מודרך"
+            description="הגיע הזמן לבחון את היכולות שלך עם תרגילים דינמיים ברמות קושי שונות."
+            buttonText="התחל לתרגל"
+            onClick={() => onNavigate(ViewEnum.Practice)}
+            color="bg-indigo-500"
         />
-        <NavCard 
-          title="טבלת המובילים"
-          description="ראו איך אתם מדורגים מול אלופי האלגברה האחרים."
-          icon={<TrophyIcon className="w-10 h-10"/>}
-          onClick={() => setView(View.LEADERBOARD)}
+        <ActionCard
+            Icon={LeaderboardIcon}
+            title="לוח המובילים"
+            description="ראה איך אתה ממוקם ביחס לשאר התלמידים."
+            buttonText="צפה בדירוג"
+            onClick={() => onNavigate(ViewEnum.Leaderboard)}
+            color="bg-amber-500"
         />
       </div>
     </div>
   );
-};
+}

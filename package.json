@@ -1,5 +1,5 @@
 {
-  "name": "אלוף-האלגברה",
+  "name": "חישוב-חכם",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,9 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "firebase": "^12.3.0"
+    "@google/genai": "latest",
+    "react-dom": "^19.2.0",
+    "react": "^19.2.0",
+    "firebase": "^12.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

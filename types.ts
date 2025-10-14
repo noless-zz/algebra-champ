@@ -1,62 +1,44 @@
-// FIX: Import `ReactNode` to resolve the "Cannot find namespace 'React'" error.
-import type { ReactNode } from 'react';
+/**
+ * @typedef {Object} User
+ * @property {string} uid
+ * @property {string} email
+ * @property {string} username
+ * @property {number} score
+ * @property {number} completedExercises
+ */
 
-export interface User {
-  uid: string;
-  email: string;
-  username: string;
-  score: number;
-  completedExercises: number;
-  emailVerified: boolean;
-}
+export const Topic = {
+  ORDER_OF_OPERATIONS: 'סדר פעולות חשבון',
+  DISTRIBUTIVE_PROPERTY: 'חוק הפילוג',
+  SHORT_MULTIPLICATION: 'נוסחאות הכפל המקוצר',
+};
 
-export enum View {
-  DASHBOARD,
-  LEARN,
-  PRACTICE,
-  LEADERBOARD,
-}
+export const Difficulty = {
+  EASY: 'קל',
+  MEDIUM: 'בינוני',
+  HARD: 'קשה',
+};
 
-export enum Topic {
-  ORDER_OF_OPERATIONS = "סדר פעולות חשבון",
-  DISTRIBUTIVE_PROPERTY = "חוק הפילוג",
-  SHORT_MULTIPLICATION = "נוסחאות הכפל המקוצר",
-}
+export const AnswerFormat = {
+  MultipleChoice: 'MULTIPLE_CHOICE',
+  TextInput: 'TEXT_INPUT',
+};
 
-export enum QuestionType {
-  // Order of operations
-  OO_SIMPLE, // e.g., a + b * c
-  OO_PARENTHESIS, // e.g., (a + b) * c
-  OO_EXPONENT, // e.g., a + b^2
-  
-  // Distributive property
-  DP_SIMPLE, // e.g., a(bx + c)
-  DP_EXPANDED, // e.g., (ax + b)(cx + d)
+/**
+ * @typedef {Object} Question
+ * @property {string} id - A unique ID for the question
+ * @property {string} topic - From Topic enum values
+ * @property {string} difficulty - From Difficulty enum values
+ * @property {string} expression - The math expression to be solved (e.g., "3 * (4 + 5)")
+ * @property {string} answer - The correct answer as a string
+ * @property {AnswerFormat} answerFormat
+ * @property {string[]} [options] - Options for multiple choice
+ * @property {number} points - Points awarded for a correct answer
+ */
 
-  // Shortened multiplication
-  SM_SQUARE_SUM, // (ax+b)^2
-  SM_SQUARE_DIFF, // (ax-b)^2
-  SM_DIFF_SQUARES, // (ax-b)(ax+b)
-}
-
-export enum AnswerFormat {
-  MULTIPLE_CHOICE,
-  TEXT_INPUT,
-}
-
-export interface Question {
-  id: string;
-  topic: Topic;
-  type: QuestionType;
-  questionText: string | ReactNode;
-  answerFormat: AnswerFormat;
-  options?: string[]; // For multiple choice
-  correctAnswer: string;
-  // For text input with multiple fields
-  isMultiPartInput?: boolean;
-  correctAnswerParts?: Record<string, string>;
-  solution: {
-    explanation: string;
-    finalAnswer: string;
-  };
-}
+export const View = {
+    Dashboard: 'DASHBOARD',
+    Learn: 'LEARN',
+    Practice: 'PRACTICE',
+    Leaderboard: 'LEADERBOARD'
+};

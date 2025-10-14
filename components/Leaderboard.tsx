@@ -1,118 +1,91 @@
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config.ts';
+import { CrownIcon } from './icons.tsx';
 
-import React, { useMemo, useState, useEffect } from 'react';
-// FIX: Remove v9 firestore imports. The query is now built using the v8 compat API.
-// import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import type { User } from '../types';
-import { TrophyIcon } from './icons';
+export default function Leaderboard({ currentUser }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-interface LeaderboardProps {
-    currentUser: User;
-    setView: (view: any) => void;
-}
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, orderBy('score', 'desc'), limit(10));
+        const querySnapshot = await getDocs(q);
+        const fetchedUsers = [];
+        querySnapshot.forEach((doc) => {
+          fetchedUsers.push({ uid: doc.id, ...doc.data() });
+        });
 
-type LeaderboardUser = Omit<User, 'email' | 'emailVerified'>;
-
-export const Leaderboard: React.FC<LeaderboardProps> = ({ currentUser, setView }) => {
-    const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardUser[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            try {
-                // FIX: Use v8 compat firestore API to query the collection.
-                const usersCollectionRef = collection(db, 'algebra-users');
-                const q = query(usersCollectionRef, orderBy('score', 'desc'), limit(10));
-                const querySnapshot = await getDocs(q);
-                const users: LeaderboardUser[] = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    users.push({
-                        uid: data.uid,
-                        username: data.username,
-                        score: data.score,
-                        completedExercises: data.completedExercises,
-                    });
-                });
-                setLeaderboardUsers(users);
-            } catch (error) {
-                console.error("Error fetching leaderboard: ", error);
-            } finally {
-                setLoading(false);
+        const currentUserInList = fetchedUsers.some(u => u.uid === currentUser.uid);
+        if (!currentUserInList && currentUser && !currentUser.isGuest) {
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            if(userDocSnap.exists()) {
+              fetchedUsers.push({ uid: currentUser.uid, ...userDocSnap.data() });
             }
-        };
-
-        fetchLeaderboard();
-    }, []);
-
-    const rankedUsers = useMemo(() => {
-        const users = [...leaderboardUsers];
-        
-        let currentUserOnBoard = users.find(u => u.uid === currentUser.uid);
-
-        if (currentUserOnBoard) {
-             // Update score from current user state in case it's more recent than the fetch
-            currentUserOnBoard.score = currentUser.score;
-            currentUserOnBoard.completedExercises = currentUser.completedExercises;
-        } else {
-             users.push({
-                uid: currentUser.uid,
-                username: currentUser.username,
-                score: currentUser.score,
-                completedExercises: currentUser.completedExercises
-            });
         }
         
-        users.sort((a, b) => b.score - a.score);
+        setUsers(fetchedUsers.sort((a,b) => b.score - a.score));
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        const top10 = users.slice(0, 10);
-        const currentUserRank = users.findIndex(u => u.uid === currentUser.uid) + 1;
-        const isCurrentUserInTop10 = top10.some(u => u.uid === currentUser.uid);
-        
-        return { top10, currentUserRank, isCurrentUserInTop10 };
-    }, [currentUser, leaderboardUsers]);
+    fetchUsers();
+  }, [currentUser]);
 
-    if (loading) {
-        return (
-            <div className="container mx-auto p-6 text-center">
-                <p>טוען את טבלת המובילים...</p>
-            </div>
-        )
-    }
+  const getRankColor = (rank) => {
+    if (rank === 0) return 'bg-amber-400 text-amber-900';
+    if (rank === 1) return 'bg-slate-300 text-slate-800';
+    if (rank === 2) return 'bg-orange-400 text-orange-900';
+    return 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200';
+  }
 
-    return (
-        <div className="container mx-auto p-6">
-            <button onClick={() => setView('DASHBOARD')} className="mb-6 text-primary-600 dark:text-primary-400 hover:underline">
-                &larr; חזרה ללוח הבקרה
-            </button>
-            <div className="text-center mb-8">
-                <TrophyIcon className="w-16 h-16 mx-auto text-amber-400" />
-                <h2 className="text-4xl font-extrabold mt-4">טבלת המובילים</h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">כאן נמצאים אלופי האלגברה!</p>
-            </div>
+  if (loading) {
+      return <div className="text-center p-10">טוען דירוג...</div>;
+  }
 
-            <div className="max-w-2xl mx-auto">
-                <div className="space-y-3">
-                    {rankedUsers.top10.map((user, index) => (
-                        <div key={user.uid} className={`flex items-center p-4 rounded-lg transition-all ${user.uid === currentUser.uid ? 'bg-primary-100 dark:bg-primary-900/50 border-2 border-primary-500 scale-105' : 'bg-white dark:bg-slate-800 shadow-sm'}`}>
-                            <div className="flex-shrink-0 w-10 text-center font-bold text-xl text-slate-500 dark:text-slate-400">{index + 1}</div>
-                            <div className="flex-grow font-semibold text-slate-800 dark:text-slate-100">{user.username}</div>
-                            <div className="font-bold text-primary-600 dark:text-primary-300">{user.score.toLocaleString()} נק'</div>
-                        </div>
-                    ))}
-                </div>
+  return (
+    <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+      <h2 className="text-4xl font-bold text-center mb-2 text-gray-900 dark:text-white">לוח המובילים</h2>
+      <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
+        10 השחקנים המובילים. האם אתה ביניהם?
+      </p>
+      
+      <ul className="space-y-4">
+        {users.map((user, index) => {
+          const isCurrentUser = user.uid === currentUser.uid;
+          return (
+            <li
+              key={user.uid}
+              className={`flex items-center p-4 rounded-lg transition-all ${isCurrentUser ? 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500 scale-105' : 'bg-gray-50 dark:bg-gray-700/50'}`}
+            >
+              <div className="flex items-center gap-4 w-16">
+                <span className={`flex items-center justify-center h-8 w-8 rounded-full font-bold text-sm ${getRankColor(index)}`}>
+                    {index + 1}
+                </span>
+                {index === 0 && <CrownIcon className="h-6 w-6 text-amber-500" />}
+              </div>
+              
+              <div className="flex-grow">
+                  <p className={`font-bold text-lg ${isCurrentUser ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-100'}`}>
+                    {user.username}
+                  </p>
+              </div>
 
-                {!rankedUsers.isCurrentUserInTop10 && rankedUsers.currentUserRank > 0 && (
-                    <>
-                        <div className="text-center my-4 font-bold text-slate-500">...</div>
-                        <div className="flex items-center p-4 rounded-lg bg-primary-100 dark:bg-primary-900/50 border-2 border-primary-500 scale-105">
-                            <div className="flex-shrink-0 w-10 text-center font-bold text-xl">{rankedUsers.currentUserRank}</div>
-                            <div className="flex-grow font-semibold">{currentUser.username} (את/ה)</div>
-                            <div className="font-bold text-primary-600 dark:text-primary-300">{currentUser.score.toLocaleString()} נק'</div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
-    );
-};
+              <div className="text-right">
+                <p className="font-bold text-indigo-500 dark:text-indigo-400 text-lg">{user.score.toLocaleString()} נק'</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user.completedExercises} תרגילים</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}

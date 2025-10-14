@@ -1,36 +1,51 @@
-
 import React from 'react';
-import type { User } from '../types';
-import { SunIcon, MoonIcon, LogoutIcon } from './icons';
+import { View as ViewEnum } from '../types.ts';
+import { LogoIcon, DashboardIcon, LearnIcon, PracticeIcon, LeaderboardIcon, LogoutIcon } from './icons.tsx';
 
-interface HeaderProps {
-  user: User;
-  logout: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
-}
+const NavItem = ({ Icon, label, isActive, onClick }) => {
+    const activeClasses = 'bg-indigo-600 text-white';
+    const inactiveClasses = 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700';
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${isActive ? activeClasses : inactiveClasses}`}
+        >
+            <Icon className="h-5 w-5" />
+            <span className="font-medium">{label}</span>
+        </button>
+    );
+};
 
-export const Header: React.FC<HeaderProps> = ({ user, logout, isDarkMode, toggleDarkMode }) => {
+
+// Fix: Replaced JSX.Element with React.ReactElement to resolve "Cannot find namespace 'JSX'" error.
+export default function Header({ user, onNavigate, onLogout, currentView }) {
   return (
-    <header className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-lg shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-          אלוף האלגברה
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-full text-sm">
-            <span className="font-medium">{user.username}</span>
-            <span className="font-bold text-amber-500">{user.score.toLocaleString()} נק'</span>
+    <header className="bg-white dark:bg-gray-800 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          <div className="flex items-center gap-4">
+             <LogoIcon className="h-10 w-10 text-indigo-500" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white hidden sm:block">חישוב חכם</h1>
           </div>
-          <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            {isDarkMode ? <SunIcon className="w-5 h-5 text-yellow-400" /> : <MoonIcon className="w-5 h-5 text-slate-600" />}
-          </button>
-          <button onClick={logout} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-            <LogoutIcon className="w-5 h-5" />
-            <span>התנתקות</span>
-          </button>
+          
+          <nav className="flex items-center gap-2 sm:gap-4">
+              <NavItem Icon={DashboardIcon} label="ראשי" isActive={currentView === ViewEnum.Dashboard} onClick={() => onNavigate(ViewEnum.Dashboard)} />
+              <NavItem Icon={LearnIcon} label="למידה" isActive={currentView === ViewEnum.Learn} onClick={() => onNavigate(ViewEnum.Learn)} />
+              <NavItem Icon={PracticeIcon} label="תרגול" isActive={currentView === ViewEnum.Practice} onClick={() => onNavigate(ViewEnum.Practice)} />
+              <NavItem Icon={LeaderboardIcon} label="דירוג" isActive={currentView === ViewEnum.Leaderboard} onClick={() => onNavigate(ViewEnum.Leaderboard)} />
+          </nav>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="font-semibold text-gray-900 dark:text-white">{user.username}</div>
+              <div className="text-sm text-indigo-500 font-bold">{user.score} נקודות</div>
+            </div>
+            <button onClick={onLogout} title="התנתק" className="p-2 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors">
+              <LogoutIcon className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       </div>
     </header>
   );
-};
+}

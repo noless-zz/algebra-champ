@@ -1,181 +1,331 @@
+import React, { useState } from 'react';
+import { GoogleGenAI } from '@google/genai';
+import { Topic, Difficulty, AnswerFormat } from '../types.ts';
+import { generateExercise } from '../services/exerciseGenerator.ts';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Topic, AnswerFormat, QuestionType } from '../types';
-import type { Question } from '../types';
-import { generateExercise } from '../services/exerciseGenerator';
+// --- Helper Components ---
 
-interface PracticeEngineProps {
-    setView: (view: any) => void;
-    updateUserScore: (points: number) => void;
-}
-
-const TopicSelector: React.FC<{ onSelect: (topic: Topic) => void }> = ({ onSelect }) => (
-    <div className="text-center">
-        <h2 className="text-3xl font-bold mb-4">בחר נושא לתרגול</h2>
-        <div className="flex flex-wrap justify-center gap-4">
-            {Object.values(Topic).map(topic => (
-                <button
-                    key={topic}
-                    onClick={() => onSelect(topic)}
-                    className="px-8 py-4 bg-primary-600 text-white font-semibold rounded-lg shadow-md hover:bg-primary-700 transition-transform transform hover:scale-105"
-                >
-                    {topic}
-                </button>
-            ))}
-        </div>
-    </div>
-);
-
-const MultiPartInput: React.FC<{ userAnswer: Record<string, string>, setUserAnswer: (val: Record<string, string>) => void }> = ({ userAnswer, setUserAnswer }) => {
-    const handleChange = (part: string, value: string) => {
-        setUserAnswer({ ...userAnswer, [part]: value });
-    };
-
+const SelectionButton = ({ label, onClick, isSelected }: {label: string, onClick: () => void, isSelected: boolean}) => {
+    const baseClasses = "w-full px-4 py-3 rounded-lg font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900";
+    const selectedClasses = "bg-indigo-600 text-white shadow-lg scale-105";
+    const unselectedClasses = "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600";
     return (
-        <div dir="ltr" className="flex items-center justify-center gap-1 font-mono text-2xl">
-            <input type="text" value={userAnswer.x2 || ''} onChange={(e) => handleChange('x2', e.target.value)} className="w-16 text-center bg-slate-100 dark:bg-slate-700 rounded-md p-2" />
-            <span>x² + </span>
-            <input type="text" value={userAnswer.x || ''} onChange={(e) => handleChange('x', e.target.value)} className="w-16 text-center bg-slate-100 dark:bg-slate-700 rounded-md p-2" />
-            <span>x + </span>
-            <input type="text" value={userAnswer.c || ''} onChange={(e) => handleChange('c', e.target.value)} className="w-16 text-center bg-slate-100 dark:bg-slate-700 rounded-md p-2" />
-        </div>
+        <button onClick={onClick} className={`${baseClasses} ${isSelected ? selectedClasses : unselectedClasses}`}>
+            {label}
+        </button>
     );
 };
 
-export const PracticeEngine: React.FC<PracticeEngineProps> = ({ setView, updateUserScore }) => {
-    const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-    const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-    const [userAnswer, setUserAnswer] = useState<string | Record<string, string>>('');
-    const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
-    const [showSolution, setShowSolution] = useState(false);
+// Component to render Gemini's explanation with highlights and exponents
+const ExplanationRenderer = ({ text }: { text: string }): React.ReactElement => {
+    if (!text) return <></>;
+    const parts = text.split(/(<em>.*?<\/em>|\S+\^\d+)/g).filter(part => part);
 
-    const loadNextQuestion = () => {
-        if (selectedTopic) {
-            setCurrentQuestion(generateExercise(selectedTopic));
-            setUserAnswer('');
-            setFeedback(null);
-            setShowSolution(false);
+    const renderedContent = parts.map((part, index) => {
+        if (part.startsWith('<em>') && part.endsWith('</em>')) {
+            const content = part.substring(4, part.length - 5);
+            return <strong key={index} className="bg-yellow-200 dark:bg-yellow-700 font-bold rounded px-1">{content}</strong>;
+        }
+        if (part.includes('^')) {
+            return part.split(/(\^)/g).map((subPart, subIndex) => {
+                if (subPart === '^') return null;
+                if (parts[index].split(/(\^)/g)[subIndex - 1] === '^') {
+                    return <sup key={`${index}-${subIndex}`}>{subPart}</sup>;
+                }
+                return subPart;
+            });
+        }
+        return part;
+    });
+
+    return <div className="whitespace-pre-wrap leading-relaxed" dir="rtl">{renderedContent}</div>;
+};
+
+
+// --- Main Practice Engine Component ---
+
+export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd: number, exercisesToAdd: number) => void}) {
+    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+    const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+    const [question, setQuestion] = useState(null);
+    const [userAnswer, setUserAnswer] = useState('');
+    
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+    const [attemptCount, setAttemptCount] = useState(0);
+    const [hint, setHint] = useState<string | null>(null);
+    const [showFinalAnswer, setShowFinalAnswer] = useState(false);
+
+    const [explanation, setExplanation] = useState<string | null>(null);
+    const [isFetchingExplanation, setIsFetchingExplanation] = useState(false);
+    
+    const [sessionScore, setSessionScore] = useState(0);
+    const [sessionExercises, setSessionExercises] = useState(0);
+
+    const handleTopicToggle = (topic: string) => {
+        setSelectedTopics(prev => 
+            prev.includes(topic) 
+                ? prev.filter(t => t !== topic) 
+                : [...prev, topic]
+        );
+    };
+
+    const startPractice = () => {
+        if (selectedTopics.length === 0 || !selectedDifficulty) return;
+        
+        const randomTopic = selectedTopics[Math.floor(Math.random() * selectedTopics.length)];
+        setQuestion(generateExercise(randomTopic, selectedDifficulty));
+        
+        // Reset per-question state
+        setUserAnswer('');
+        setIsCorrect(null);
+        setFeedbackMessage(null);
+        setAttemptCount(0);
+        setHint(null);
+        setShowFinalAnswer(false);
+        setExplanation(null);
+        setIsFetchingExplanation(false);
+    };
+    
+    const getHintForQuestion = (q: any) => {
+        switch(q.topic) {
+            case Topic.ORDER_OF_OPERATIONS: return "זכור את סדר הפעולות: סוגריים, כפל וחילוק, ואז חיבור וחיסור.";
+            case Topic.DISTRIBUTIVE_PROPERTY: return "זכור את חוק הפילוג: כפול את הגורם שמחוץ לסוגריים בכל אחד מהגורמים שבפנים.";
+            case Topic.SHORT_MULTIPLICATION:
+                switch(q.formulaType) {
+                    case '(a+b)^2': return "רמז: (a+b)² = a² + 2ab + b²";
+                    case '(a-b)^2': return "רמז: (a-b)² = a² - 2ab + b²";
+                    case '(a+b)(a-b)': return "רמז: (a+b)(a-b) = a² - b²";
+                    default: return "זכור את נוסחאות הכפל המקוצר.";
+                }
+            default: return null;
         }
     };
 
-    useEffect(() => {
-        if (selectedTopic) {
-            loadNextQuestion();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedTopic]);
+    const handleAnswerSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userAnswer.trim()) return;
 
-    const isAnswerCorrect = useMemo(() => {
-        if (!currentQuestion) return false;
-        if (currentQuestion.isMultiPartInput && typeof userAnswer === 'object') {
-            return Object.keys(currentQuestion.correctAnswerParts || {}).every(key =>
-                (currentQuestion.correctAnswerParts || {})[key] === userAnswer[key]
-            );
-        }
-        return currentQuestion.correctAnswer === userAnswer;
-    }, [currentQuestion, userAnswer]);
+        const normalizedUserAnswer = userAnswer.replace(/\s/g, '');
+        const normalizedCorrectAnswer = question.answer.replace(/\s/g, '');
 
-    const handleSubmit = () => {
-        if (showSolution) return;
-
-        const correct = isAnswerCorrect;
+        const correct = normalizedUserAnswer === normalizedCorrectAnswer;
         
         if (correct) {
-            setFeedback({ correct: true, message: 'כל הכבוד! תשובה נכונה!' });
-            updateUserScore(10);
+            setIsCorrect(true);
+            setFeedbackMessage(`נכון מאוד! זכית ב-${question.points} נקודות.`);
+            setShowFinalAnswer(true);
+            setSessionScore(prev => prev + question.points);
+            setSessionExercises(prev => prev + 1);
+            updateUser(question.points, 1);
         } else {
-            setFeedback({ correct: false, message: 'אופס, נסו שוב.' });
+            const newAttemptCount = attemptCount + 1;
+            setAttemptCount(newAttemptCount);
+            setIsCorrect(false);
+
+            if (newAttemptCount === 1) { // First mistake
+                setHint(getHintForQuestion(question));
+                setFeedbackMessage(`טעות... נסה שוב. נותרו לך ${3 - newAttemptCount} ניסיונות.`);
+                setUserAnswer('');
+            } else if (newAttemptCount < 3) { // Second mistake
+                setFeedbackMessage(`עדיין לא נכון. נותרו לך ${3 - newAttemptCount} ניסיונות.`);
+                setUserAnswer('');
+            } else { // Third and final mistake
+                setFeedbackMessage('זו הייתה ההזדמנות האחרונה שלך.');
+                setShowFinalAnswer(true);
+                setSessionExercises(prev => prev + 1);
+                updateUser(0, 1); // Counts as a completed exercise
+            }
         }
-        setShowSolution(true);
     };
 
-    if (!selectedTopic) {
+    const fetchExplanation = async () => {
+        if (!question) return;
+        setIsFetchingExplanation(true);
+        setExplanation(null);
+        try {
+            const ai = new GoogleGenAI({ apiKey: "AIzaSyA3UIywHgeGTrJAcuVKqZqpfBO_N5Vf4ws" });
+            const prompt = `
+            הסבר בעברית, בצורה פשוטה, ויזואלית וידידותית, איך לפתור את התרגיל הבא:
+            שאלה: ${question.expression}
+            התשובה הנכונה: ${question.answer}
+
+            הנחיות להסבר:
+            1.  חלק את ההסבר לשלבים ברורים וממוספרים (שלב 1, שלב 2...).
+            2.  בכל שלב, הסבר במילים מה הפעולה שאתה מבצע.
+            3.  השתמש באימוג'ים רלוונטיים (למשל, 💡, 🔢, ✅) כדי להפוך את ההסבר למושך.
+            4.  כדי להדגיש את החלק הרלוונטי בתרגיל בכל שלב, עטוף אותו בתג <em>. לדוגמה: "נפשט את מה שבתוך ה <em>(5-2)</em> ונקבל 3".
+            5.  השתמש בכתיב מתמטי תקין. לחזקות, השתמש בסימן '^' (למשל, x^2). אל תשתמש בכוכבית (*) לכפל אלא אם זה הכרחי.
+            6.  שמור על שפה חיובית ומעודדת.
+            `;
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+            setExplanation(response.text);
+        } catch (error) {
+            console.error("Error fetching explanation from Gemini:", error);
+            setExplanation("שגיאה בקבלת ההסבר. נסה שוב מאוחר יותר.");
+        } finally {
+            setIsFetchingExplanation(false);
+        }
+    };
+    
+    const handleNextQuestion = () => {
+        startPractice();
+    };
+
+    const resetSession = () => {
+        setSelectedTopics([]);
+        setSelectedDifficulty(null);
+        setQuestion(null);
+        setSessionScore(0);
+        setSessionExercises(0);
+    }
+    
+    // UI for selection screen
+    if (!question) {
         return (
-             <div className="container mx-auto p-6">
-                <button onClick={() => setView('DASHBOARD')} className="mb-6 text-primary-600 dark:text-primary-400 hover:underline">
-                    &larr; חזרה ללוח הבקרה
+            <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
+                <h2 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">תרגול</h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">בחר נושא אחד או יותר ורמת קושי כדי להתחיל.</p>
+                
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">בחר נושאים:</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {Object.values(Topic).map(topic => (
+                                <SelectionButton 
+                                    key={topic} 
+                                    label={topic} 
+                                    onClick={() => handleTopicToggle(topic)} 
+                                    isSelected={selectedTopics.includes(topic)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">בחר רמת קושי:</h3>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {Object.values(Difficulty).map(difficulty => (
+                                <SelectionButton 
+                                    key={difficulty} 
+                                    label={difficulty} 
+                                    onClick={() => setSelectedDifficulty(difficulty)} 
+                                    isSelected={selectedDifficulty === difficulty}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    onClick={startPractice}
+                    disabled={selectedTopics.length === 0 || !selectedDifficulty}
+                    className="w-full mt-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-bold text-xl py-4 px-4 rounded-lg transition transform hover:scale-105"
+                >
+                    התחל לתרגל
                 </button>
-                <TopicSelector onSelect={setSelectedTopic} />
             </div>
         );
     }
 
-    if (!currentQuestion) {
-        return <div>טוען שאלה...</div>;
-    }
+    const feedbackClasses = isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-900/50' : 'border-red-500 bg-red-50 dark:bg-red-900/50';
 
+    // UI for practice screen
     return (
-        <div className="container mx-auto p-6">
-            <div className="w-full max-w-2xl mx-auto">
-                 <div className="flex justify-between items-center mb-4">
-                    <button onClick={() => setSelectedTopic(null)} className="text-primary-600 dark:text-primary-400 hover:underline">
-                        &larr; החלפת נושא
-                    </button>
-                    <div className="text-sm font-medium bg-secondary-100 dark:bg-secondary-800 text-secondary-800 dark:text-secondary-200 px-3 py-1 rounded-full">{currentQuestion.topic}</div>
+        <div className="max-w-2xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <span className="text-sm font-semibold bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 py-1 px-3 rounded-full">{question.topic}</span>
+                        <span className="text-sm font-semibold bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 py-1 px-3 rounded-full ml-2">{question.difficulty}</span>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-lg font-bold text-indigo-500">{sessionScore} נקודות</div>
+                        <div className="text-sm text-gray-500">תרגיל {sessionExercises + 1}</div>
+                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-2xl">
-                    <div className="text-center mb-6">
-                        <div className="text-2xl md:text-3xl font-bold min-h-[80px] flex items-center justify-center">
-                            {currentQuestion.questionText}
+                <div className="my-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">פתור את התרגיל הבא:</p>
+                    <p dir="ltr" className="text-4xl font-mono tracking-wider text-gray-900 dark:text-white">{question.expression}</p>
+                </div>
+                
+                <form onSubmit={handleAnswerSubmit}>
+                    {question.answerFormat === AnswerFormat.TextInput ? (
+                        <input
+                            type="text"
+                            value={userAnswer}
+                            onChange={(e) => setUserAnswer(e.target.value)}
+                            disabled={showFinalAnswer}
+                            placeholder="הקלד את תשובתך..."
+                            dir="ltr"
+                            className="w-full text-center px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-lg text-2xl font-mono text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                            autoComplete="off"
+                        />
+                    ) : (
+                         <div className="grid grid-cols-2 gap-4">
+                            {question.options.map((option: string, index: number) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => setUserAnswer(option)}
+                                    disabled={showFinalAnswer}
+                                    className={`p-4 rounded-lg text-xl font-mono transition-all
+                                        ${userAnswer === option ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' : 'bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500'}
+                                        disabled:opacity-70 disabled:cursor-not-allowed
+                                    `}
+                                >
+                                    {option}
+                                </button>
+                            ))}
                         </div>
-                    </div>
+                    )}
 
-                    <div className="my-8">
-                        {currentQuestion.answerFormat === AnswerFormat.MULTIPLE_CHOICE && (
-                            <div className="grid grid-cols-2 gap-4">
-                                {currentQuestion.options?.map((option, i) => (
-                                    <button
-                                        key={i}
-                                        disabled={showSolution}
-                                        onClick={() => setUserAnswer(option)}
-                                        className={`p-4 rounded-lg font-mono text-lg transition-all ${userAnswer === option ? 'ring-4 ring-primary-500 scale-105' : 'ring-2 ring-slate-300 dark:ring-slate-600'} ${showSolution && option === currentQuestion.correctAnswer ? 'bg-green-200 dark:bg-green-800 ring-green-500' : ''} ${showSolution && userAnswer === option && !isAnswerCorrect ? 'bg-red-200 dark:bg-red-800 ring-red-500' : ''} disabled:opacity-70 disabled:cursor-not-allowed`}
-                                    >
-                                        {option}
-                                    </button>
-                                ))}
+                    {!showFinalAnswer && (
+                        <button
+                            type="submit"
+                            disabled={!userAnswer.trim()}
+                            className="w-full mt-6 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-bold text-lg py-3 px-4 rounded-lg transition"
+                        >
+                            בדוק תשובה ({3 - attemptCount} נסיונות)
+                        </button>
+                    )}
+                </form>
+
+                {feedbackMessage && (
+                     <div className={`mt-6 p-4 rounded-lg border-r-4 ${feedbackClasses}`}>
+                        <h4 className="text-xl font-bold">{feedbackMessage}</h4>
+                        {showFinalAnswer && !isCorrect && <p className="mt-1">התשובה הנכונה היא: <strong dir="ltr" className="font-mono">{question.answer}</strong></p>}
+                        {hint && <p className="mt-2 text-indigo-700 dark:text-indigo-300 font-semibold">{hint}</p>}
+                    </div>
+                )}
+                 
+                {showFinalAnswer && !isCorrect && (
+                    <div className="mt-4">
+                        <button onClick={fetchExplanation} disabled={isFetchingExplanation} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                            {isFetchingExplanation ? 'טוען הסבר...' : '🤔 בקש הסבר לפתרון'}
+                        </button>
+                        {explanation && (
+                            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <ExplanationRenderer text={explanation} />
                             </div>
                         )}
-                         {currentQuestion.answerFormat === AnswerFormat.TEXT_INPUT && (
-                            currentQuestion.isMultiPartInput ? 
-                                <MultiPartInput userAnswer={userAnswer as Record<string, string>} setUserAnswer={setUserAnswer as (val: Record<string, string>) => void} /> :
-                                <input
-                                    type="text"
-                                    value={userAnswer as string}
-                                    onChange={(e) => setUserAnswer(e.target.value)}
-                                    disabled={showSolution}
-                                    className="w-full text-center p-4 rounded-lg font-mono text-xl bg-slate-100 dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
-                        )}
                     </div>
-
-                    {feedback && (
-                        <div className={`p-4 rounded-lg text-center font-bold ${feedback.correct ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                            {feedback.message}
-                        </div>
-                    )}
-                    
-                    {showSolution && (
-                         <div className="mt-4 p-4 bg-slate-100 dark:bg-slate-700 rounded-lg text-center">
-                            <p className="font-bold">התשובה הנכונה:</p>
-                            <p className="font-mono text-xl text-primary-500 my-2">{currentQuestion.solution.finalAnswer}</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-300">{currentQuestion.solution.explanation}</p>
-                         </div>
-                    )}
-
-                    <div className="mt-8 text-center">
-                        {showSolution ? (
-                            <button onClick={loadNextQuestion} className="w-full md:w-auto px-10 py-3 bg-secondary-600 hover:bg-secondary-700 text-white font-bold rounded-lg transition-transform transform hover:scale-105">
-                                השאלה הבאה &rarr;
-                            </button>
-                        ) : (
-                            <button onClick={handleSubmit} disabled={!userAnswer} className="w-full md:w-auto px-10 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition disabled:bg-slate-400 disabled:cursor-not-allowed">
-                                בדיקה
-                            </button>
-                        )}
-                    </div>
-                </div>
+                 )}
+            </div>
+            
+            <div className="mt-6 flex gap-4">
+                {showFinalAnswer && (
+                    <button onClick={handleNextQuestion} className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg transition text-lg">
+                        התרגיל הבא &larr;
+                    </button>
+                )}
+                 <button onClick={resetSession} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition text-lg">
+                    סיים וחזור
+                </button>
             </div>
         </div>
     );
-};
+}

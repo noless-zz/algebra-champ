@@ -175,42 +175,90 @@ const generateShortMultiplication = (difficulty: string) => {
 // --- Generation for Isosceles Triangle ---
 
 const generateIsoscelesTriangleExercise = (difficulty: string) => {
-    const scenarios = [
-        // Level 1 (Easy): Basic "No" cases.
-        { description: 'גובה בלבד', drawingProps: { showAltitude: true }, answer: 'לא', points: 15, level: 1 },
-        { description: 'תיכון בלבד', drawingProps: { showMedian: true }, answer: 'לא', points: 15, level: 1 },
-        { description: 'חוצה זווית בלבד', drawingProps: { showAngleBisector: true }, answer: 'לא', points: 15, level: 1 },
-
-        // Level 2 (Medium): Basic "Yes" cases.
-        { description: 'שתי צלעות שוות', drawingProps: { showSideTicks: true }, answer: 'כן', points: 20, level: 2 },
-        { description: 'שתי זוויות בסיס שוות', drawingProps: { showAngleTicks: true }, answer: 'כן', points: 20, level: 2 },
-
-        // Level 3 (Hard): Combined "Yes" cases and tricky "No" cases.
-        { description: 'גובה לבסיס הוא גם תיכון', drawingProps: { showAltitude: true, showMedian: true }, answer: 'כן', points: 30, level: 3 },
-        { description: 'גובה לבסיס הוא גם חוצה זווית הראש', drawingProps: { showAltitude: true, showAngleBisector: true }, answer: 'כן', points: 30, level: 3 },
-        { description: 'תיכון לבסיס הוא גם חוצה זווית הראש', drawingProps: { showMedian: true, showAngleBisector: true }, answer: 'כן', points: 30, level: 3 },
-        { description: 'גובה ותיכון מקודקודים שונים', drawingProps: { showAltitude: true, showMedianFromB: true }, answer: 'לא', points: 35, level: 3 },
-    ];
-
-    let filteredScenarios;
+    // --- Scenarios for Easy Level ---
     if (difficulty === Difficulty.EASY) {
-        // Only level 1 questions
-        filteredScenarios = scenarios.filter(s => s.level === 1);
-    } else if (difficulty === Difficulty.MEDIUM) {
-        // Level 1 and 2 questions to mix it up
-        filteredScenarios = scenarios.filter(s => s.level <= 2);
-    } else { // HARD
-        // All questions are available
-        filteredScenarios = scenarios;
-    }
-    
-    // Fallback in case a level has no specific questions (should not happen with current setup)
-    if (filteredScenarios.length === 0) {
-        filteredScenarios = scenarios;
+        const scenarios = [
+            { description: 'גובה', drawingProps: { showAltitude: true }, answer: 'גובה' },
+            { description: 'תיכון', drawingProps: { showMedian: true }, answer: 'תיכון' },
+            { description: 'חוצה זווית', drawingProps: { showAngleBisector: true }, answer: 'חוצה זווית' },
+        ];
+        const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        return {
+            id: `q_${Date.now()}`,
+            topic: Topic.ISOSCELES_TRIANGLE,
+            difficulty,
+            expression: 'מהו הקו המיוחד המסומן בשרטוט במשולש ABC?',
+            drawingProps: scenario.drawingProps,
+            description: scenario.description,
+            answer: scenario.answer,
+            answerFormat: AnswerFormat.MultipleChoice,
+            options: shuffleArray(['גובה', 'תיכון', 'חוצה זווית']),
+            points: 15,
+        };
     }
 
-    const scenario = filteredScenarios[Math.floor(Math.random() * filteredScenarios.length)];
-    
+    // --- Scenarios for Medium Level ---
+    if (difficulty === Difficulty.MEDIUM) {
+        const identificationScenarios = [
+            { type: 'identify', description: 'גובה', drawingProps: { showAltitude: true }, answer: 'גובה' },
+            { type: 'identify', description: 'תיכון', drawingProps: { showMedian: true }, answer: 'תיכון' },
+            { type: 'identify', description: 'חוצה זווית', drawingProps: { showAngleBisector: true }, answer: 'חוצה זווית' },
+        ];
+        const isIsoscelesScenarios = [
+             { type: 'isIsosceles', description: 'שתי צלעות שוות', drawingProps: { showSideTicks: true }, answer: 'כן' },
+             { type: 'isIsosceles', description: 'שתי זוויות בסיס שוות', drawingProps: { showAngleTicks: true }, answer: 'כן' },
+             { type: 'isIsosceles', description: 'גובה בלבד', drawingProps: { showAltitude: true }, answer: 'לא' },
+        ];
+
+        // 50% chance for each question type
+        const scenarios = Math.random() > 0.5 ? identificationScenarios : isIsoscelesScenarios;
+        const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        
+        if (scenario.type === 'identify') {
+            return {
+                id: `q_${Date.now()}`,
+                topic: Topic.ISOSCELES_TRIANGLE,
+                difficulty,
+                expression: 'מהו הקו המיוחד המסומן בשרטוט במשולש ABC?',
+                drawingProps: scenario.drawingProps,
+                description: scenario.description,
+                answer: scenario.answer,
+                answerFormat: AnswerFormat.MultipleChoice,
+                options: shuffleArray(['גובה', 'תיכון', 'חוצה זווית']),
+                points: 20,
+            };
+        } else { // isIsosceles
+            return {
+                id: `q_${Date.now()}`,
+                topic: Topic.ISOSCELES_TRIANGLE,
+                difficulty,
+                expression: 'בהתאם לנתונים בשרטוט, האם המשולש ABC הוא בוודאות משולש שווה-שוקיים?',
+                drawingProps: scenario.drawingProps,
+                description: scenario.description,
+                answer: scenario.answer,
+                answerFormat: AnswerFormat.MultipleChoice,
+                options: ['כן', 'לא'],
+                points: 25,
+            };
+        }
+    }
+
+    // --- Scenarios for Hard Level ---
+    const hardScenarios = [
+        // "Yes" answers - prove isosceles
+        { description: 'גובה לבסיס הוא גם תיכון', drawingProps: { showAltitude: true, showMedian: true }, answer: 'כן', points: 30 },
+        { description: 'גובה לבסיס הוא גם חוצה זווית הראש', drawingProps: { showAltitude: true, showAngleBisector: true }, answer: 'כן', points: 30 },
+        { description: 'תיכון לבסיס הוא גם חוצה זווית הראש', drawingProps: { showMedian: true, showAngleBisector: true }, answer: 'כן', points: 30 },
+        { description: 'שתי צלעות שוות', drawingProps: { showSideTicks: true }, answer: 'כן', points: 30 },
+        { description: 'שתי זוויות בסיס שוות', drawingProps: { showAngleTicks: true }, answer: 'כן', points: 30 },
+        
+        // "No" answers - do not prove isosceles
+        { description: 'גובה בלבד', drawingProps: { showAltitude: true }, answer: 'לא', points: 35 },
+        { description: 'תיכון בלבד', drawingProps: { showMedian: true }, answer: 'לא', points: 35 },
+        { description: 'חוצה זווית בלבד', drawingProps: { showAngleBisector: true }, answer: 'לא', points: 35 },
+        { description: 'גובה ותיכון מקודקודים שונים', drawingProps: { showAltitude: true, showMedianFromB: true }, answer: 'לא', points: 35 },
+    ];
+    const scenario = hardScenarios[Math.floor(Math.random() * hardScenarios.length)];
     return {
         id: `q_${Date.now()}`,
         topic: Topic.ISOSCELES_TRIANGLE,
@@ -224,6 +272,7 @@ const generateIsoscelesTriangleExercise = (difficulty: string) => {
         points: scenario.points,
     };
 };
+
 
 // --- Main Exported Function ---
 

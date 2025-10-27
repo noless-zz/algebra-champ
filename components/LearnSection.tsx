@@ -306,10 +306,11 @@ const IsoscelesTriangle = () => (
             title="משפט 1: חוצה זווית שהוא גם תיכון"
             drawing={<TriangleDrawing showAngleBisector={true} showMedian={true} />}
             formula={
-                <div className="text-center text-lg">
-                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> וגם <span className="text-green-500">תיכון</span></p>
+                <div className="text-center text-lg space-y-2">
+                    <p><span className="font-bold">תנאי א':</span> <span className="text-red-500 font-mono">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> (<span dir="ltr" className="font-mono inline-block">∠BAD = ∠CAD</span>)</p>
+                    <p><span className="font-bold">תנאי ב':</span> <span className="text-red-500 font-mono">AD</span> הוא גם <span className="text-green-500">תיכון</span> (<span dir="ltr" className="font-mono inline-block">BD = CD</span>)</p>
                     <p className="text-2xl my-1">&darr;</p>
-                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                    <p><span className="font-bold">מסקנה:</span> המשולש שווה-שוקיים (<span className="text-blue-500 font-mono" dir="ltr">AB = AC</span>)</p>
                 </div>
             }
         >
@@ -320,10 +321,11 @@ const IsoscelesTriangle = () => (
             title="משפט 2: חוצה זווית שהוא גם גובה"
             drawing={<TriangleDrawing showAngleBisector={true} showAltitude={true} />}
             formula={
-                 <div className="text-center text-lg">
-                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> וגם <span className="text-orange-500">גובה</span></p>
+                 <div className="text-center text-lg space-y-2">
+                    <p><span className="font-bold">תנאי א':</span> <span className="text-red-500 font-mono">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> (<span dir="ltr" className="font-mono inline-block">∠BAD = ∠CAD</span>)</p>
+                    <p><span className="font-bold">תנאי ב':</span> <span className="text-red-500 font-mono">AD</span> הוא גם <span className="text-orange-500">גובה</span> (<span dir="ltr" className="font-mono inline-block">∠ADB = 90°</span>)</p>
                     <p className="text-2xl my-1">&darr;</p>
-                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                    <p><span className="font-bold">מסקנה:</span> המשולש שווה-שוקיים (<span className="text-blue-500 font-mono" dir="ltr">AB = AC</span>)</p>
                 </div>
             }
         >
@@ -334,10 +336,11 @@ const IsoscelesTriangle = () => (
             title="משפט 3: תיכון שהוא גם גובה"
             drawing={<TriangleDrawing showMedian={true} showAltitude={true} />}
             formula={
-                 <div className="text-center text-lg">
-                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-green-500">תיכון</span> וגם <span className="text-orange-500">גובה</span></p>
+                 <div className="text-center text-lg space-y-2">
+                    <p><span className="font-bold">תנאי א':</span> <span className="text-red-500 font-mono">AD</span> הוא <span className="text-green-500">תיכון</span> (<span dir="ltr" className="font-mono inline-block">BD = CD</span>)</p>
+                    <p><span className="font-bold">תנאי ב':</span> <span className="text-red-500 font-mono">AD</span> הוא גם <span className="text-orange-500">גובה</span> (<span dir="ltr" className="font-mono inline-block">∠ADB = 90°</span>)</p>
                     <p className="text-2xl my-1">&darr;</p>
-                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                    <p><span className="font-bold">מסקנה:</span> המשולש שווה-שוקיים (<span className="text-blue-500 font-mono" dir="ltr">AB = AC</span>)</p>
                 </div>
             }
         >

@@ -182,6 +182,8 @@ export const generateExercise = (topic: string, difficulty: string) => {
             return generateDistributiveProperty(difficulty);
         case Topic.SHORT_MULTIPLICATION:
             return generateShortMultiplication(difficulty);
+        case Topic.ISOSCELES_TRIANGLE:
+            // Placeholder: No generator yet, default to a simple algebra question
         default:
             // Fallback to a default exercise if topic is unknown
             return generateOrderOfOperations(Difficulty.EASY);

@@ -19,7 +19,28 @@ export const Topic = {
   ORDER_OF_OPERATIONS: 'סדר פעולות חשבון',
   DISTRIBUTIVE_PROPERTY: 'חוק הפילוג',
   SHORT_MULTIPLICATION: 'נוסחאות הכפל המקוצר',
+  ISOSCELES_TRIANGLE: 'משולש שווה-שוקיים',
 };
+
+export const TopicStructure = [
+    {
+        category: 'אלגברה',
+        icon: '🧮',
+        topics: [
+            Topic.ORDER_OF_OPERATIONS,
+            Topic.DISTRIBUTIVE_PROPERTY,
+            Topic.SHORT_MULTIPLICATION,
+        ]
+    },
+    {
+        category: 'גאומטריה',
+        icon: '📐',
+        topics: [
+            Topic.ISOSCELES_TRIANGLE,
+        ]
+    }
+];
+
 
 export const Difficulty = {
   EASY: 'קל',

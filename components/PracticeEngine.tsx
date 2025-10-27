@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Topic, Difficulty, AnswerFormat } from '../types.ts';
+import { Topic, Difficulty, AnswerFormat, TopicStructure } from '../types.ts';
 import { generateExercise } from '../services/exerciseGenerator.ts';
 
 // --- Helper Components ---
@@ -186,21 +186,28 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
     // UI for selection screen
     if (!question) {
         return (
-            <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
+            <div className="max-w-3xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
                 <h2 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">תרגול</h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">בחר נושא אחד או יותר ורמת קושי כדי להתחיל.</p>
                 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     <div>
-                        <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">בחר נושאים:</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {Object.values(Topic).map(topic => (
-                                <SelectionButton 
-                                    key={topic} 
-                                    label={topic} 
-                                    onClick={() => handleTopicToggle(topic)} 
-                                    isSelected={selectedTopics.includes(topic)}
-                                />
+                        <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">בחר נושאים:</h3>
+                        <div className="space-y-6">
+                            {TopicStructure.map(categoryInfo => (
+                                <div key={categoryInfo.category}>
+                                    <h4 className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mb-3">{categoryInfo.icon} {categoryInfo.category}</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {categoryInfo.topics.map(topic => (
+                                             <SelectionButton 
+                                                key={topic} 
+                                                label={topic} 
+                                                onClick={() => handleTopicToggle(topic)} 
+                                                isSelected={selectedTopics.includes(topic)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </div>

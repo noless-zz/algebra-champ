@@ -26,6 +26,86 @@ const SelectionCard = ({ icon, title, onClick }) => (
     </button>
 );
 
+const TriangleDrawing = ({
+    showAltitude = false,
+    showMedian = false,
+    showAngleBisector = false,
+    showSideTicks = false,
+    showAngleTicks = false,
+    labelA = 'A',
+    labelB = 'B',
+    labelC = 'C',
+    labelD = 'D',
+}) => {
+    return (
+        <svg viewBox="0 0 100 100" className="w-48 h-48 mx-auto">
+            {/* Triangle */}
+            <polygon points="50,10 10,90 90,90" className="fill-blue-100 dark:fill-blue-900/50 stroke-blue-500 dark:stroke-blue-400" strokeWidth="1" />
+
+            {/* Special Line AD */}
+            {(showAltitude || showMedian || showAngleBisector) &&
+                <line x1="50" y1="10" x2="50" y2="90" className="stroke-red-500 dark:stroke-red-400" strokeWidth="1" strokeDasharray="2,2" />
+            }
+            
+            {/* Altitude symbol */}
+            {showAltitude &&
+                <polygon points="50,90 50,85 55,85 55,90" className="fill-none stroke-orange-500 dark:stroke-orange-400" strokeWidth="1" />
+            }
+
+            {/* Median symbol */}
+            {showMedian &&
+                <>
+                    <line x1="30" y1="88" x2="30" y2="92" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.5" />
+                    <line x1="70" y1="88" x2="70" y2="92" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.5" />
+                </>
+            }
+
+            {/* Angle Bisector symbol */}
+            {showAngleBisector &&
+                <>
+                    <path d="M47,19 A 10 10 0 0 1 50,16" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
+                    <path d="M50,16 A 10 10 0 0 1 53,19" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
+                </>
+            }
+            
+             {/* Side ticks for Isosceles */}
+            {showSideTicks &&
+                <>
+                    <line x1="28" y1="49" x2="32" y2="51" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                    <line x1="68" y1="51" x2="72" y2="49" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                </>
+            }
+
+            {/* Angle ticks for Isosceles */}
+            {showAngleTicks &&
+                <>
+                     <path d="M 18,90 A 8 8 0 0 1 13.58,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                     <path d="M 82,90 A 8 8 0 0 0 86.42,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                </>
+            }
+            
+            {/* Labels */}
+            <text x="50" y="8" textAnchor="middle" className="text-sm fill-current">{labelA}</text>
+            <text x="5" y="95" textAnchor="start" className="text-sm fill-current">{labelB}</text>
+            <text x="95" y="95" textAnchor="end" className="text-sm fill-current">{labelC}</text>
+            {(showAltitude || showMedian || showAngleBisector) &&
+                <text x="53" y="95" textAnchor="start" className="text-sm fill-current">{labelD}</text>
+            }
+        </svg>
+    )
+};
+
+const TheoremBox = ({ title, children, drawing, formula }: { title: string; children: React.ReactNode; drawing: React.ReactNode; formula: React.ReactNode; }) => (
+    <div className="bg-gray-50 dark:bg-gray-800/50 border-r-4 border-gray-400 p-6 rounded-lg mb-8">
+        <h4 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">{title}</h4>
+        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">{children}</p>
+        <div className="my-4 flex justify-center">{drawing}</div>
+        <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md shadow-inner">
+            {formula}
+        </div>
+    </div>
+);
+
 
 // --- Content Components for Each Topic ---
 
@@ -176,167 +256,184 @@ const ShortMultiplication = () => (
     </div>
 );
 
-
-const TriangleDiagram = ({ children, width=200, height=170 }) => (
-    <svg viewBox="0 0 200 170" className="mx-auto my-4 text-gray-800 dark:text-gray-200" width={width} height={height}>
-        {/* Triangle base */}
-        <polygon points="100,20 180,150 20,150" className="fill-indigo-100 dark:fill-indigo-900/50 stroke-indigo-500 stroke-2" />
-        {/* Labels */}
-        <text x="96" y="15" className="font-bold text-lg fill-current">A</text>
-        <text x="10" y="165" className="font-bold text-lg fill-current">B</text>
-        <text x="183" y="165" className="font-bold text-lg fill-current">C</text>
-        {children}
-    </svg>
-);
-
-const IsoscelesTriangleContent = () => (
+const IsoscelesTriangle = () => (
     <div>
         <h3 className="text-3xl font-bold mb-4 text-gray-800 dark:text-gray-100">📐 משולש שווה-שוקיים</h3>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-2">
-            <strong>הגדרה:</strong> משולש שבו שתי צלעות שוות זו לזו נקרא משולש שווה-שוקיים.
-        </p>
         <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-            הצלעות השוות נקראות <strong className="font-bold text-indigo-600 dark:text-indigo-400">שוקיים</strong>, והצלע השלישית נקראת <strong className="font-bold text-indigo-600 dark:text-indigo-400">בסיס</strong>. הזווית שמול הבסיס נקראת <strong className="font-bold text-indigo-600 dark:text-indigo-400">זווית הראש</strong>.
+            משולש שווה-שוקיים הוא משולש שיש לו שתי צלעות שוות באורכן. הצלעות השוות נקראות "שוקיים", והצלע השלישית נקראת "בסיס".
         </p>
-        <TriangleDiagram>
-            <line x1="55" y1="75" x2="65" y2="95" className="stroke-current stroke-2" transform="rotate(-35 60 85)" />
-            <line x1="135" y1="95" x2="145" y2="75" className="stroke-current stroke-2" transform="rotate(35 140 85)" />
-            <text x="25" y="90" className="fill-current text-sm">שוק</text>
-            <text x="175" y="90" className="fill-current text-sm">שוק</text>
-            <text x="90" y="165" className="fill-current text-sm">בסיס</text>
-        </TriangleDiagram>
-        
-        <h4 className="text-2xl font-semibold mt-8 mb-4">תכונה 1: זוויות הבסיס שוות</h4>
-        <FormulaBox title="משפט">
-            <>
-                במשולש שווה-שוקיים, <strong className="text-indigo-700 dark:text-indigo-300">זוויות הבסיס</strong> (הזוויות שמול השוקיים השוות) <strong className="text-indigo-700 dark:text-indigo-300">שוות זו לזו</strong>.
-                <TriangleDiagram>
-                    <line x1="55" y1="75" x2="65" y2="95" className="stroke-current stroke-2" transform="rotate(-35 60 85)" />
-                    <line x1="135" y1="95" x2="145" y2="75" className="stroke-current stroke-2" transform="rotate(35 140 85)" />
-                    <path d="M 45 150 A 25 25 0 0 1 33 129" className="stroke-blue-500 fill-none stroke-2" />
-                    <path d="M 155 150 A 25 25 0 0 0 167 129" className="stroke-blue-500 fill-none stroke-2" />
-                    <text x="40" y="135" className="fill-blue-500 font-bold">∠B</text>
-                    <text x="145" y="135" className="fill-blue-500 font-bold">∠C</text>
-                </TriangleDiagram>
-                <div className="text-center font-mono text-lg space-y-1 mt-4" dir="ltr">
-                    <p><span className="font-sans text-gray-600 dark:text-gray-400">אם:</span> AB = AC</p>
-                    <p className="font-sans text-2xl transform rotate-90 text-gray-500 dark:text-gray-400">⇓</p>
-                    <p><span className="font-sans text-gray-600 dark:text-gray-400">אז:</span> ∠B = ∠C</p>
-                </div>
-            </>
-        </FormulaBox>
-        
-        <h4 className="text-2xl font-semibold mt-10 mb-4">תכונה 2: הקו המיוחד מקודקוד הראש</h4>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-            במשולש שווה-שוקיים, הקו היורד מקודקוד הראש אל הבסיס הוא "קו פלא": הוא גם גובה, גם תיכון וגם חוצה-זווית. אנו אומרים ששלושת הקווים האלה <strong>מתלכדים</strong> לקו אחד.
-        </p>
-        <FormulaBox title="משפט">
-            <>
-                במשולש שווה-שוקיים, חוצה זווית הראש מתלכד עם התיכון לבסיס ועם הגובה לבסיס.
-                <TriangleDiagram>
-                    <line x1="100" y1="20" x2="100" y2="150" className="stroke-red-500 stroke-2" />
-                    <text x="105" y="165" className="font-bold text-lg fill-current">D</text>
-                    {/* Angle bisector marks - BLUE */}
-                    <path d="M 100 20 A 20 20 0 0 1 115 35" className="stroke-blue-500 fill-none" />
-                    <path d="M 100 20 A 20 20 0 0 0 85 35" className="stroke-blue-500 fill-none" />
-                    {/* Median marks - GREEN */}
-                    <line x1="58" y1="155" x2="62" y2="145" className="stroke-green-500 stroke-2" />
-                    <line x1="138" y1="145" x2="142" y2="155" className="stroke-green-500 stroke-2" />
-                    {/* Altitude mark - ORANGE */}
-                    <rect x="90" y="140" width="10" height="10" className="stroke-orange-500 fill-none stroke-2" />
-                </TriangleDiagram>
-                <ul className="list-none pr-0 mt-4 space-y-3 text-right">
-                    <li><strong className="text-blue-600 dark:text-blue-400">חוצה זווית:</strong> AD חוצה את ∠BAC</li>
-                    <li><strong className="text-green-600 dark:text-green-400">תיכון:</strong> AD חוצה את הבסיס BC (כלומר BD = DC)</li>
-                    <li><strong className="text-orange-600 dark:text-orange-400">גובה:</strong> AD מאונך לבסיס BC (כלומר ∠ADB = 90°)</li>
-                </ul>
-            </>
-        </FormulaBox>
 
-        <h4 className="text-2xl font-semibold mt-10 mb-4">מסקנה חשובה (המשפטים ההפוכים)</h4>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-           המשפטים עובדים גם בכיוון ההפוך! הם מאפשרים לנו להוכיח שמשולש הוא שווה-שוקיים.
-        </p>
-        <div className="p-6 bg-green-50 dark:bg-green-900/50 rounded-lg border-r-4 border-green-500">
-            <h5 className="text-xl font-semibold text-green-800 dark:text-green-200 mb-3">תנאים להוכחת משולש שווה-שוקיים</h5>
-            <p className="text-green-700 dark:text-green-300">
-                אם במשולש, אחד מהתנאים הבאים מתקיים, אז המשולש הוא שווה-שוקיים:
-            </p>
-            <ul className="list-disc pr-6 mt-3 space-y-2 text-green-700 dark:text-green-300">
-                <li>התיכון לצלע הוא גם הגובה לאותה צלע.</li>
-                <li>התיכון לצלע הוא גם חוצה זווית הראש.</li>
-                <li>הגובה לצלע הוא גם חוצה זווית הראש.</li>
-                <li>שתי זוויות במשולש שוות זו לזו (המשפט ההפוך למשפט זוויות הבסיס).</li>
-            </ul>
-            <p className="mt-4 font-semibold text-green-800 dark:text-green-200">
-                בקיצור: אם שניים מהקווים המיוחדים (תיכון, גובה, חוצה זווית) מתלכדים, המשולש שווה-שוקיים.
-            </p>
+        <div className="bg-indigo-50 dark:bg-indigo-900/50 border-r-4 border-indigo-500 p-6 rounded-lg mb-6">
+            <h3 className="text-xl font-semibold text-indigo-800 dark:text-indigo-200 mb-4">תכונה 1: זוויות הבסיס שוות</h3>
+            <p className="text-lg text-indigo-700 dark:text-indigo-300 mb-4">במשולש שווה-שוקיים, הזוויות שמול השוקיים השוות - זוויות הבסיס - שוות זו לזו.</p>
+            <div className="my-4 flex justify-center">
+                <TriangleDrawing showSideTicks={true} showAngleTicks={true} />
+            </div>
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-md text-center shadow-inner">
+                <p className="font-mono text-xl">אם <span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>, אז <span className="text-green-500">∠B</span> = <span className="text-green-500">∠C</span></p>
+            </div>
         </div>
+        
+        <h3 className="text-3xl font-bold mt-12 mb-4 text-gray-800 dark:text-gray-100">מושגי יסוד במשולש</h3>
+        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+            לפני שנלמד איך להוכיח שמשולש הוא שווה-שוקיים, בואו נרענן כמה מושגים חשובים שתקפים לכל משולש.
+        </p>
+
+        <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div className="bg-indigo-50 dark:bg-indigo-900/50 p-4 rounded-lg">
+                <h4 className="text-xl font-semibold text-indigo-800 dark:text-indigo-200 mb-2">גובה</h4>
+                <TriangleDrawing showAltitude={true} />
+                <p className="text-base mt-2">קטע היוצא מקודקוד ומאונך לצלע שמולו.</p>
+            </div>
+            <div className="bg-indigo-50 dark:bg-indigo-900/50 p-4 rounded-lg">
+                <h4 className="text-xl font-semibold text-indigo-800 dark:text-indigo-200 mb-2">תיכון</h4>
+                <TriangleDrawing showMedian={true} />
+                <p className="text-base mt-2">קטע המחבר קודקוד עם אמצע הצלע שמולו.</p>
+            </div>
+            <div className="bg-indigo-50 dark:bg-indigo-900/50 p-4 rounded-lg">
+                <h4 className="text-xl font-semibold text-indigo-800 dark:text-indigo-200 mb-2">חוצה זווית</h4>
+                <TriangleDrawing showAngleBisector={true} />
+                <p className="text-base mt-2">קטע המחלק את זווית הקודקוד לשתי זוויות שוות.</p>
+            </div>
+        </div>
+
+        <h3 className="text-3xl font-bold mt-12 mb-4 text-gray-800 dark:text-gray-100">איך מוכיחים שמשולש הוא שווה-שוקיים?</h3>
+        <p className="text-lg text-gray-700 dark:text-gray-300 mb-8">
+            כדי להוכיח שמשולש הוא שווה-שוקיים, לא תמיד צריך למדוד את הצלעות. מספיק להראות שאחד מהקווים המיוחדים (גובה, תיכון, חוצה זווית) הוא גם קו מיוחד נוסף. אם שניים מהם "מתלכדים" לקו אחד, המשולש חייב להיות שווה-שוקיים!
+        </p>
+
+        <TheoremBox
+            title="משפט 1: חוצה זווית שהוא גם תיכון"
+            drawing={<TriangleDrawing showAngleBisector={true} showMedian={true} />}
+            formula={
+                <div className="text-center text-lg">
+                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> וגם <span className="text-green-500">תיכון</span></p>
+                    <p className="text-2xl my-1">&darr;</p>
+                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                </div>
+            }
+        >
+            אם במשולש, הקו שמחלק את זווית הראש לשניים (חוצה זווית) הוא גם הקו שמגיע בדיוק לאמצע הבסיס (תיכון), אז המשולש הוא שווה-שוקיים.
+        </TheoremBox>
+
+        <TheoremBox
+            title="משפט 2: חוצה זווית שהוא גם גובה"
+            drawing={<TriangleDrawing showAngleBisector={true} showAltitude={true} />}
+            formula={
+                 <div className="text-center text-lg">
+                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-purple-500">חוצה זווית</span> וגם <span className="text-orange-500">גובה</span></p>
+                    <p className="text-2xl my-1">&darr;</p>
+                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                </div>
+            }
+        >
+            אם במשולש, הקו שמחלק את זווית הראש לשניים (חוצה זווית) הוא גם הקו שיוצר זווית ישרה עם הבסיס (גובה), אז המשולש הוא שווה-שוקיים.
+        </TheoremBox>
+
+        <TheoremBox
+            title="משפט 3: תיכון שהוא גם גובה"
+            drawing={<TriangleDrawing showMedian={true} showAltitude={true} />}
+            formula={
+                 <div className="text-center text-lg">
+                    <p>אם <span className="text-red-500">AD</span> הוא <span className="text-green-500">תיכון</span> וגם <span className="text-orange-500">גובה</span></p>
+                    <p className="text-2xl my-1">&darr;</p>
+                    <p>אז: המשולש שווה-שוקיים (<span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>)</p>
+                </div>
+            }
+        >
+             אם במשולש, הקו שמגיע לאמצע הבסיס (תיכון) הוא גם הקו שמאונך לבסיס (גובה), אז המשולש הוא שווה-שוקיים.
+        </TheoremBox>
+
     </div>
 );
 
-
 export default function LearnSection() {
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedTopic, setSelectedTopic] = useState(null);
+    const contentRef = useRef(null);
 
-    const renderTopicContent = () => {
-        switch (selectedTopic) {
-            case Topic.ORDER_OF_OPERATIONS:
-                return <OrderOfOperations />;
-            case Topic.DISTRIBUTIVE_PROPERTY:
-                return <DistributiveProperty />;
-            case Topic.SHORT_MULTIPLICATION:
-                return <ShortMultiplication />;
-            case Topic.ISOSCELES_TRIANGLE:
-                return <IsoscelesTriangleContent />;
-            default:
-                return null;
+    useEffect(() => {
+        if (selectedTopic && contentRef.current) {
+            contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [selectedTopic]);
+
+    const handleCategorySelect = (category) => {
+        setSelectedCategory(category);
+        setSelectedTopic(null); // Reset topic when category changes
+    };
+
+    const handleTopicSelect = (topic) => {
+        setSelectedTopic(topic);
+    };
+
+    const resetSelection = () => {
+        setSelectedCategory(null);
+        setSelectedTopic(null);
+    };
+
+    const renderContent = () => {
+        if (!selectedTopic) return null;
+
+        switch(selectedTopic) {
+            case Topic.ORDER_OF_OPERATIONS: return <OrderOfOperations />;
+            case Topic.DISTRIBUTIVE_PROPERTY: return <DistributiveProperty />;
+            case Topic.SHORT_MULTIPLICATION: return <ShortMultiplication />;
+            case Topic.ISOSCELES_TRIANGLE: return <IsoscelesTriangle />;
+            default: return <p>בחר נושא להתחיל.</p>;
         }
     };
     
-    if (selectedTopic) {
+    const currentTopics = selectedCategory ? TopicStructure.find(c => c.category === selectedCategory.category)?.topics : [];
+
+    if (!selectedCategory) {
         return (
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto">
-                <button onClick={() => setSelectedTopic(null)} className="mb-6 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-bold py-2 px-4 rounded-lg">
-                    &rarr; חזרה לרשימת הנושאים
-                </button>
-                {renderTopicContent()}
+            <div className="max-w-4xl mx-auto text-center">
+                 <h2 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">מרכז למידה</h2>
+                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-10">בחר קטגוריה כדי להתחיל ללמוד.</p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {TopicStructure.map(categoryInfo => (
+                        <SelectionCard 
+                            key={categoryInfo.category}
+                            icon={categoryInfo.icon}
+                            title={categoryInfo.category}
+                            onClick={() => handleCategorySelect(categoryInfo)}
+                        />
+                    ))}
+                </div>
             </div>
-        )
+        );
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-12">
-            <div className="text-center">
-                <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">מרכז הלמידה</h2>
-                <p className="text-lg text-gray-600 dark:text-gray-300">
-                    בחר נושא כדי להתחיל ללמוד.
-                </p>
+        <div>
+            <button onClick={resetSelection} className="mb-6 text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
+                &larr; חזרה לבחירת קטגוריה
+            </button>
+            <div className="text-center mb-10">
+                <h2 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">{selectedCategory.icon} {selectedCategory.category}</h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400">בחר נושא כדי לראות את חומרי הלימוד.</p>
             </div>
-            
-            {TopicStructure.map(categoryInfo => (
-                 <div key={categoryInfo.category}>
-                    <h3 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-4">
-                        <span className="text-4xl">{categoryInfo.icon}</span>
-                        {categoryInfo.category}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                         {categoryInfo.topics.map(topic => (
-                             <SelectionCard 
-                                key={topic}
-                                title={topic} 
-                                onClick={() => setSelectedTopic(topic)}
-                                icon={
-                                    topic === Topic.ORDER_OF_OPERATIONS ? '🔢' :
-                                    topic === Topic.DISTRIBUTIVE_PROPERTY ? '↔️' :
-                                    topic === Topic.SHORT_MULTIPLICATION ? '⚡️' :
-                                    '🔺'
-                                }
-                            />
-                         ))}
-                    </div>
+            <div className="flex flex-col md:flex-row gap-8 items-start">
+                <nav className="md:w-1/4 space-y-2 md:sticky md:top-8">
+                    {currentTopics.map(topic => (
+                        <button 
+                            key={topic} 
+                            onClick={() => handleTopicSelect(topic)}
+                            className={`w-full text-right p-3 rounded-lg transition-colors text-lg ${selectedTopic === topic ? 'bg-indigo-600 text-white font-bold' : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                        >
+                            {topic}
+                        </button>
+                    ))}
+                </nav>
+                <div ref={contentRef} className="md:w-3/4 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg min-h-[400px]">
+                   {selectedTopic ? renderContent() : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-xl text-gray-500">בחר נושא מהתפריט כדי להתחיל.</p>
+                        </div>
+                   )}
                 </div>
-             ))}
+            </div>
         </div>
     );
 }

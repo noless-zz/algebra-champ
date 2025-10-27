@@ -172,6 +172,59 @@ const generateShortMultiplication = (difficulty: string) => {
   };
 }
 
+// --- Generation for Isosceles Triangle ---
+
+const generateIsoscelesTriangleExercise = (difficulty: string) => {
+    const scenarios = [
+        // Level 1 (Easy): Basic "No" cases.
+        { description: 'גובה בלבד', drawingProps: { showAltitude: true }, answer: 'לא', points: 15, level: 1 },
+        { description: 'תיכון בלבד', drawingProps: { showMedian: true }, answer: 'לא', points: 15, level: 1 },
+        { description: 'חוצה זווית בלבד', drawingProps: { showAngleBisector: true }, answer: 'לא', points: 15, level: 1 },
+
+        // Level 2 (Medium): Basic "Yes" cases.
+        { description: 'שתי צלעות שוות', drawingProps: { showSideTicks: true }, answer: 'כן', points: 20, level: 2 },
+        { description: 'שתי זוויות בסיס שוות', drawingProps: { showAngleTicks: true }, answer: 'כן', points: 20, level: 2 },
+
+        // Level 3 (Hard): Combined "Yes" cases and tricky "No" cases.
+        { description: 'גובה לבסיס הוא גם תיכון', drawingProps: { showAltitude: true, showMedian: true }, answer: 'כן', points: 30, level: 3 },
+        { description: 'גובה לבסיס הוא גם חוצה זווית הראש', drawingProps: { showAltitude: true, showAngleBisector: true }, answer: 'כן', points: 30, level: 3 },
+        { description: 'תיכון לבסיס הוא גם חוצה זווית הראש', drawingProps: { showMedian: true, showAngleBisector: true }, answer: 'כן', points: 30, level: 3 },
+        { description: 'גובה ותיכון מקודקודים שונים', drawingProps: { showAltitude: true, showMedianFromB: true }, answer: 'לא', points: 35, level: 3 },
+    ];
+
+    let filteredScenarios;
+    if (difficulty === Difficulty.EASY) {
+        // Only level 1 questions
+        filteredScenarios = scenarios.filter(s => s.level === 1);
+    } else if (difficulty === Difficulty.MEDIUM) {
+        // Level 1 and 2 questions to mix it up
+        filteredScenarios = scenarios.filter(s => s.level <= 2);
+    } else { // HARD
+        // All questions are available
+        filteredScenarios = scenarios;
+    }
+    
+    // Fallback in case a level has no specific questions (should not happen with current setup)
+    if (filteredScenarios.length === 0) {
+        filteredScenarios = scenarios;
+    }
+
+    const scenario = filteredScenarios[Math.floor(Math.random() * filteredScenarios.length)];
+    
+    return {
+        id: `q_${Date.now()}`,
+        topic: Topic.ISOSCELES_TRIANGLE,
+        difficulty,
+        expression: 'בהתאם לנתונים בשרטוט, האם המשולש ABC הוא בוודאות משולש שווה-שוקיים?',
+        drawingProps: scenario.drawingProps,
+        description: scenario.description,
+        answer: scenario.answer,
+        answerFormat: AnswerFormat.MultipleChoice,
+        options: ['כן', 'לא'],
+        points: scenario.points,
+    };
+};
+
 // --- Main Exported Function ---
 
 export const generateExercise = (topic: string, difficulty: string) => {
@@ -183,7 +236,7 @@ export const generateExercise = (topic: string, difficulty: string) => {
         case Topic.SHORT_MULTIPLICATION:
             return generateShortMultiplication(difficulty);
         case Topic.ISOSCELES_TRIANGLE:
-            // Placeholder: No generator yet, default to a simple algebra question
+            return generateIsoscelesTriangleExercise(difficulty);
         default:
             // Fallback to a default exercise if topic is unknown
             return generateOrderOfOperations(Difficulty.EASY);

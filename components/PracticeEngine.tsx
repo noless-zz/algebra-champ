@@ -5,6 +5,62 @@ import { generateExercise } from '../services/exerciseGenerator.ts';
 
 // --- Helper Components ---
 
+const PracticeTriangleDrawing = ({
+    showAltitude = false, // from A to BC
+    showMedian = false, // from A to BC
+    showAngleBisector = false, // from A
+    showSideTicks = false, // AB=AC
+    showAngleTicks = false, // angle B = angle C
+    showMedianFromB = false,
+}) => {
+    return (
+        <div className="flex justify-center">
+            <svg viewBox="0 0 100 100" className="w-64 h-64">
+                <polygon points="50,10 10,90 90,90" className="fill-blue-100 dark:fill-blue-900/50 stroke-blue-500 dark:stroke-blue-400" strokeWidth="1" />
+    
+                {(showAltitude || showMedian || showAngleBisector) &&
+                    <line x1="50" y1="10" x2="50" y2="90" className="stroke-red-500 dark:stroke-red-400" strokeWidth="1" strokeDasharray="2,2" />}
+                
+                {showAltitude &&
+                    <polygon points="50,90 50,85 55,85 55,90" className="fill-none stroke-orange-500 dark:stroke-orange-400" strokeWidth="1" />}
+                
+                {showMedian && <>
+                    <line x1="30" y1="88" x2="30" y2="92" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.5" />
+                    <line x1="70" y1="88" x2="70" y2="92" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.5" />
+                </>}
+    
+                {showAngleBisector && <>
+                    <path d="M47,19 A 10 10 0 0 1 50,16" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
+                    <path d="M50,16 A 10 10 0 0 1 53,19" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
+                </>}
+                
+                {showSideTicks && <>
+                    <line x1="28" y1="49" x2="32" y2="51" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                    <line x1="68" y1="51" x2="72" y2="49" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                </>}
+    
+                {showAngleTicks && <>
+                     <path d="M 18,90 A 8 8 0 0 1 13.58,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                     <path d="M 82,90 A 8 8 0 0 0 86.42,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                </>}
+
+                {showMedianFromB && <>
+                    <line x1="10" y1="90" x2="70" y2="50" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="1" strokeDasharray="2,2" />
+                    <line x1="59" y1="31" x2="61" y2="29" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="1.5" />
+                    <line x1="79" y1="71" x2="81" y2="69" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="1.5" />
+                    <text x="72" y="50" textAnchor="start" className="text-sm fill-current">E</text>
+                </>}
+                
+                <text x="50" y="8" textAnchor="middle" className="text-sm fill-current">A</text>
+                <text x="5" y="95" textAnchor="start" className="text-sm fill-current">B</text>
+                <text x="95" y="95" textAnchor="end" className="text-sm fill-current">C</text>
+                {(showAltitude || showMedian || showAngleBisector) &&
+                    <text x="53" y="95" textAnchor="start" className="text-sm fill-current">D</text>}
+            </svg>
+        </div>
+    );
+};
+
 const SelectionButton = ({ label, onClick, isSelected }: {label: string, onClick: () => void, isSelected: boolean}) => {
     const baseClasses = "w-full px-4 py-3 rounded-lg font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900";
     const selectedClasses = "bg-indigo-600 text-white shadow-lg scale-105";
@@ -98,6 +154,8 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                     case '(a+b)(a-b)': return "רמז: (a+b)(a-b) = a² - b²";
                     default: return "זכור את נוסחאות הכפל המקוצר.";
                 }
+            case Topic.ISOSCELES_TRIANGLE:
+                return "בדוק את התכונות של משולש שווה-שוקיים: שתי צלעות שוות, שתי זוויות בסיס שוות, או התלכדות של גובה, תיכון וחוצה זווית.";
             default: return null;
         }
     };
@@ -118,23 +176,31 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
             setSessionScore(prev => prev + question.points);
             setSessionExercises(prev => prev + 1);
             updateUser(question.points, 1, question.topic);
+            return;
+        }
+        
+        // Incorrect answer
+        setIsCorrect(false);
+        
+        if (question.topic === Topic.ISOSCELES_TRIANGLE) {
+            setFeedbackMessage('טעות. זו הייתה ההזדמנות היחידה שלך.');
+            setShowFinalAnswer(true);
+            setSessionExercises(prev => prev + 1);
+            updateUser(0, 1, question.topic);
+            fetchExplanation();
         } else {
             const newAttemptCount = attemptCount + 1;
             setAttemptCount(newAttemptCount);
-            setIsCorrect(false);
 
-            if (newAttemptCount === 1) { // First mistake
-                setHint(getHintForQuestion(question));
-                setFeedbackMessage(`טעות... נסה שוב. נותרו לך ${3 - newAttemptCount} ניסיונות.`);
-                setUserAnswer('');
-            } else if (newAttemptCount < 3) { // Second mistake
-                setFeedbackMessage(`עדיין לא נכון. נותרו לך ${3 - newAttemptCount} ניסיונות.`);
-                setUserAnswer('');
-            } else { // Third and final mistake
+            if (newAttemptCount >= 3) {
                 setFeedbackMessage('זו הייתה ההזדמנות האחרונה שלך.');
                 setShowFinalAnswer(true);
                 setSessionExercises(prev => prev + 1);
-                updateUser(0, 1, question.topic); // Counts as a completed exercise
+                updateUser(0, 1, question.topic);
+            } else {
+                setHint(getHintForQuestion(question));
+                setFeedbackMessage(`טעות... נסה שוב. נותרו לך ${3 - newAttemptCount} ניסיונות.`);
+                setUserAnswer('');
             }
         }
     };
@@ -148,12 +214,13 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
             const prompt = `
             הסבר בעברית, בצורה פשוטה, ויזואלית וידידותית, איך לפתור את התרגיל הבא:
             שאלה: ${question.expression}
+            ${question.description ? `נתונים בשרטוט: ${question.description}` : ''}
             התשובה הנכונה: ${question.answer}
 
             הנחיות להסבר:
             1.  חלק את ההסבר לשלבים ברורים וממוספרים (שלב 1, שלב 2...).
             2.  בכל שלב, הסבר במילים מה הפעולה שאתה מבצע.
-            3.  השתמש באימוג'ים רלוונטיים (למשל, 💡, 🔢, ✅) כדי להפוך את ההסבר למושך.
+            3.  השתמש באימוג'ים רלוונטיים (למשל, 💡, 📐, ✅) כדי להפוך את ההסבר למושך.
             4.  כדי להדגיש את החלק הרלוונטי בתרגיל בכל שלב, עטוף אותו בתג <em>. לדוגמה: "נפשט את מה שבתוך ה <em>(5-2)</em> ונקבל 3".
             5.  השתמש בכתיב מתמטי תקין. לחזקות, השתמש בסימן '^' (למשל, x^2). אל תשתמש בכוכבית (*) לכפל אלא אם זה הכרחי.
             6.  שמור על שפה חיובית ומעודדת.
@@ -255,8 +322,17 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                 </div>
 
                 <div className="my-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">פתור את התרגיל הבא:</p>
-                    <p dir="ltr" className="text-4xl font-mono tracking-wider text-gray-900 dark:text-white">{question.expression}</p>
+                    {question.drawingProps ? (
+                        <>
+                            <p className="text-xl text-gray-800 dark:text-gray-200 mb-4">{question.expression}</p>
+                            <PracticeTriangleDrawing {...question.drawingProps} />
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">פתור את התרגיל הבא:</p>
+                            <p dir="ltr" className="text-4xl font-mono tracking-wider text-gray-900 dark:text-white">{question.expression}</p>
+                        </>
+                    )}
                 </div>
                 
                 <form onSubmit={handleAnswerSubmit}>
@@ -279,7 +355,7 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                                     type="button"
                                     onClick={() => setUserAnswer(option)}
                                     disabled={showFinalAnswer}
-                                    className={`p-4 rounded-lg text-xl font-mono transition-all
+                                    className={`p-4 rounded-lg text-2xl font-semibold transition-all
                                         ${userAnswer === option ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' : 'bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500'}
                                         disabled:opacity-70 disabled:cursor-not-allowed
                                     `}
@@ -296,7 +372,7 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                             disabled={!userAnswer.trim()}
                             className="w-full mt-6 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-bold text-lg py-3 px-4 rounded-lg transition"
                         >
-                            בדוק תשובה ({3 - attemptCount} נסיונות)
+                            {question.topic === Topic.ISOSCELES_TRIANGLE ? 'בדוק תשובה' : `בדוק תשובה (${3 - attemptCount} נסיונות)`}
                         </button>
                     )}
                 </form>
@@ -311,16 +387,24 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                  
                 {showFinalAnswer && !isCorrect && (
                     <div className="mt-4">
-                        <button onClick={fetchExplanation} disabled={isFetchingExplanation} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
-                            {isFetchingExplanation ? 'טוען הסבר...' : '🤔 בקש הסבר לפתרון'}
-                        </button>
-                        {explanation && (
+                        {question.topic !== Topic.ISOSCELES_TRIANGLE && (
+                            <button onClick={fetchExplanation} disabled={isFetchingExplanation} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                                {isFetchingExplanation ? 'טוען הסבר...' : '🤔 בקש הסבר לפתרון'}
+                            </button>
+                        )}
+                        
+                        {isFetchingExplanation && (
+                            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <p>טוען הסבר...</p>
+                            </div>
+                        )}
+                        {!isFetchingExplanation && explanation && (
                             <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                 <ExplanationRenderer text={explanation} />
                             </div>
                         )}
                     </div>
-                 )}
+                )}
             </div>
             
             <div className="mt-6 flex gap-4">

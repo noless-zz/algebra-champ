@@ -9,6 +9,7 @@ import {
 import { db } from '../firebase/config.ts';
 
 const CURRENT_USER_KEY = 'smartCalcCurrentUser';
+const USERS_COLLECTION = 'scores_aloni_yitzhak_9_4';
 
 // Helper to get today's date as YYYY-MM-DD
 const getTodayId = () => {
@@ -35,7 +36,7 @@ export function useUser() {
         return;
     }
     setLoading(true);
-    const userDocRef = doc(db, "users", username);
+    const userDocRef = doc(db, USERS_COLLECTION, username);
     const userDocSnap = await getDoc(userDocRef);
 
     const defaultUserStructure = {
@@ -44,13 +45,18 @@ export function useUser() {
         completedExercises: 0,
         dailyStats: { score: 0, periodId: 'none' },
         weeklyStats: { score: 0, periodId: 'none', scoresBySubject: {} },
-        scoresBySubject: {}
+        scoresBySubject: {},
+        lastActivity: new Date().toISOString()
     };
 
     if (userDocSnap.exists()) {
         const data = userDocSnap.data();
         // Merge with defaults to ensure new fields exist for old users
         setUser({ ...defaultUserStructure, ...data, username });
+         // Update last activity on load for existing users
+        updateDoc(userDocRef, { lastActivity: new Date().toISOString() }).catch(e => {
+            console.warn("Could not update last activity time:", e);
+        });
     } else {
         // User does not exist, create a new record
         try {
@@ -95,7 +101,7 @@ export function useUser() {
     const todayId = getTodayId();
     const weekId = getWeekId();
     
-    const userDocRef = doc(db, "users", user.username);
+    const userDocRef = doc(db, USERS_COLLECTION, user.username);
     
     // Fetch latest server data to avoid race conditions with period resets
     const docSnap = await getDoc(userDocRef);
@@ -114,7 +120,8 @@ export function useUser() {
         completedExercises: increment(exercisesToAdd),
         [`scoresBySubject.${topic}`]: increment(scoreToAdd),
         dailyStats: { score: newDailyScore, periodId: todayId },
-        weeklyStats: { score: newWeeklyScore, periodId: weekId, scoresBySubject: newWeeklySubjects }
+        weeklyStats: { score: newWeeklyScore, periodId: weekId, scoresBySubject: newWeeklySubjects },
+        lastActivity: new Date().toISOString()
     };
 
     // Optimistically update local state with the same calculated logic

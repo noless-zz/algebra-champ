@@ -44,7 +44,7 @@ const ExplanationRenderer = ({ text }: { text: string }): React.ReactElement => 
 
 // --- Main Practice Engine Component ---
 
-export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd: number, exercisesToAdd: number) => void}) {
+export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd: number, exercisesToAdd: number, topic: string) => void}) {
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
     const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
     const [question, setQuestion] = useState(null);
@@ -117,7 +117,7 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
             setShowFinalAnswer(true);
             setSessionScore(prev => prev + question.points);
             setSessionExercises(prev => prev + 1);
-            updateUser(question.points, 1);
+            updateUser(question.points, 1, question.topic);
         } else {
             const newAttemptCount = attemptCount + 1;
             setAttemptCount(newAttemptCount);
@@ -134,7 +134,7 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                 setFeedbackMessage('זו הייתה ההזדמנות האחרונה שלך.');
                 setShowFinalAnswer(true);
                 setSessionExercises(prev => prev + 1);
-                updateUser(0, 1); // Counts as a completed exercise
+                updateUser(0, 1, question.topic); // Counts as a completed exercise
             }
         }
     };

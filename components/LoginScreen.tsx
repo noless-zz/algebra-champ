@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LogoIcon } from './icons.tsx';
+import { userList } from '../users.ts';
 
 export default function LoginScreen({ onLogin }) {
-  const [name, setName] = useState('');
+  const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (name.trim()) {
-      onLogin(name.trim());
-    }
+  const initials = useMemo(() => {
+    const initialSet = new Set<string>();
+    userList.forEach(user => {
+      // Assuming format "Lastname Firstname"
+      const lastNameInitial = user.split(' ')[0][0];
+      initialSet.add(lastNameInitial);
+    });
+    return Array.from(initialSet).sort((a, b) => a.localeCompare(b, 'he'));
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    if (!selectedInitial) return [];
+    return userList
+        .filter(user => user.split(' ')[0][0] === selectedInitial)
+        .sort((a, b) => a.localeCompare(b, 'he'));
+  }, [selectedInitial]);
+  
+  const handleInitialSelect = (initial: string) => {
+    setSelectedInitial(initial);
+  };
+  
+  const handleUserSelect = (username: string) => {
+    onLogin(username);
+  };
+
+  const resetSelection = () => {
+    setSelectedInitial(null);
   };
 
   return (
@@ -17,29 +40,47 @@ export default function LoginScreen({ onLogin }) {
         <div className="flex justify-center mb-6">
             <LogoIcon className="h-20 w-20 text-indigo-500" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ברוכים הבאים ל-Midpoint Master
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-8">
-            אפליקציית הלימוד והתרגול למציאת נקודת אמצע קטע.
-        </p>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="הקלד את שמך..."
-            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-lg text-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 outline-none transition duration-300"
-            aria-label="שם משתמש"
-          />
-          <button
-            type="submit"
-            disabled={!name.trim()}
-            className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-bold text-lg py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105"
-          >
-            התחל ללמוד
-          </button>
-        </form>
+        {!selectedInitial ? (
+          <>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                ברוכים הבאים ל"חישוב חכם"
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-8">
+                בחרו את האות הראשונה של שם המשפחה שלכם
+            </p>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+              {initials.map(initial => (
+                <button
+                  key={initial}
+                  onClick={() => handleInitialSelect(initial)}
+                  className="aspect-square flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-lg font-bold text-2xl transition-all duration-200"
+                >
+                  {initial}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              בחרו את שמכם
+            </h1>
+            <button onClick={resetSelection} className="text-indigo-500 hover:underline mb-6">
+              &rarr; חזרה לבחירת אות
+            </button>
+            <div className="space-y-3">
+              {filteredUsers.map(user => (
+                <button
+                  key={user}
+                  onClick={() => handleUserSelect(user)}
+                  className="w-full text-center px-4 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-lg font-semibold text-xl transition-all duration-200"
+                >
+                  {user}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

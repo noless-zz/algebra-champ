@@ -6,6 +6,14 @@
  * @property {number} score
  * @property {number} completedExercises
  */
+// Fix: Defined and exported the User type as a TypeScript interface to resolve import error.
+export type User = {
+  uid: string;
+  email: string;
+  username: string;
+  score: number;
+  completedExercises: number;
+};
 
 export const Topic = {
   ORDER_OF_OPERATIONS: 'סדר פעולות חשבון',

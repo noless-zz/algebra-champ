@@ -1,9 +1,7 @@
-
-
 import React from 'react';
 import { useUser } from './hooks/useUser.ts';
 import { View } from './types.ts';
-import AuthScreen from './components/AuthScreen.tsx'; // Changed from LoginScreen
+import LoginScreen from './components/LoginScreen.tsx';
 import Header from './components/Header.tsx';
 import Dashboard from './components/Dashboard.tsx';
 import LearnSection from './components/LearnSection.tsx';
@@ -11,8 +9,7 @@ import PracticeEngine from './components/PracticeEngine.tsx';
 import Leaderboard from './components/Leaderboard.tsx';
 
 export default function App() {
-  // useUser now returns loading state and auth functions
-  const { user, loading, signUp, login, logout, updateUser, loginAsGuest } = useUser();
+  const { user, loading, login, logout, updateUser } = useUser();
   const [view, setView] = React.useState(View.Dashboard);
 
   const handleNavigate = React.useCallback((newView) => {
@@ -46,7 +43,7 @@ export default function App() {
 
   // If not loading and no user, show Auth screen
   if (!user) {
-    return <AuthScreen onLogin={login} onSignUp={signUp} onGuestLogin={loginAsGuest} />;
+    return <LoginScreen onLogin={login} />;
   }
 
   // If logged in, show the main app

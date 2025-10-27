@@ -38,7 +38,7 @@ const TriangleDrawing = ({
     labelD = 'D',
 }) => {
     return (
-        <svg viewBox="0 0 100 100" className="w-48 h-48 mx-auto">
+        <svg viewBox="0 0 100 102" className="w-48 h-48 mx-auto">
             {/* Triangle */}
             <polygon points="50,10 10,90 90,90" className="fill-blue-100 dark:fill-blue-900/50 stroke-blue-500 dark:stroke-blue-400" strokeWidth="1" />
 
@@ -63,16 +63,16 @@ const TriangleDrawing = ({
             {/* Angle Bisector symbol */}
             {showAngleBisector &&
                 <>
-                    <path d="M47,19 A 10 10 0 0 1 50,16" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
-                    <path d="M50,16 A 10 10 0 0 1 53,19" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1" />
+                    <path d="M50,25 A 25 25 0 0 0 42,28" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1.2" />
+                    <path d="M50,25 A 25 25 0 0 1 58,28" fill="none" className="stroke-purple-500 dark:stroke-purple-400" strokeWidth="1.2" />
                 </>
             }
             
              {/* Side ticks for Isosceles */}
             {showSideTicks &&
                 <>
-                    <line x1="28" y1="49" x2="32" y2="51" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
-                    <line x1="68" y1="51" x2="72" y2="49" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                    <line x1="26" y1="48" x2="34" y2="52" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
+                    <line x1="66" y1="52" x2="74" y2="48" className="stroke-blue-500 dark:stroke-blue-400" strokeWidth="1.5" />
                 </>
             }
 
@@ -86,10 +86,10 @@ const TriangleDrawing = ({
             
             {/* Labels */}
             <text x="50" y="8" textAnchor="middle" className="text-sm fill-current">{labelA}</text>
-            <text x="5" y="95" textAnchor="start" className="text-sm fill-current">{labelB}</text>
-            <text x="95" y="95" textAnchor="end" className="text-sm fill-current">{labelC}</text>
+            <text x="5" y="100" textAnchor="start" className="text-sm fill-current">{labelB}</text>
+            <text x="95" y="100" textAnchor="end" className="text-sm fill-current">{labelC}</text>
             {(showAltitude || showMedian || showAngleBisector) &&
-                <text x="53" y="95" textAnchor="start" className="text-sm fill-current">{labelD}</text>
+                <text x="53" y="100" textAnchor="start" className="text-sm fill-current">{labelD}</text>
             }
         </svg>
     )

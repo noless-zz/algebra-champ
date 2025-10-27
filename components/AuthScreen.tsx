@@ -74,8 +74,8 @@ export default function AuthScreen({ onLogin, onSignUp, onGuestLogin }) {
         <div className="flex justify-center mb-6">
             <LogoIcon className="h-20 w-20 text-indigo-500" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-            {isLogin ? 'התחברות ל"חישוב חכם"' : 'הרשמה ל"חישוב חכם"'}
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+            {isLogin ? "התחברות למרכז תירגול כיתה ט' 4 יח\"ל - אלוני יצחק" : "הרשמה למרכז תירגול כיתה ט' 4 יח\"ל - אלוני יצחק"}
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4 mt-8">
           {!isLogin && (

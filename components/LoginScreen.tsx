@@ -42,8 +42,8 @@ export default function LoginScreen({ onLogin }) {
         </div>
         {!selectedInitial ? (
           <>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                ברוכים הבאים ל"חישוב חכם"
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                ברוכים הבאים למרכז תירגול כיתה ט' 4 יח"ל - אלוני יצחק
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mb-8">
                 בחרו את האות הראשונה של שם המשפחה שלכם

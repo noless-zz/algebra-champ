@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config.ts';
 
-const CURRENT_USER_KEY = 'smartCalcCurrentUser';
+const CURRENT_USER_KEY = 'aloniYitzhakCurrentUser_9_4';
 const USERS_COLLECTION = 'scores_aloni_yitzhak_9_4';
 
 // Helper to get today's date as YYYY-MM-DD

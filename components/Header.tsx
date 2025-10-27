@@ -25,7 +25,7 @@ export default function Header({ user, onNavigate, onLogout, currentView }) {
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center gap-4">
              <LogoIcon className="h-10 w-10 text-indigo-500" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white hidden sm:block">חישוב חכם</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">מרכז תירגול כיתה ט' 4 יח"ל - אלוני יצחק</h1>
           </div>
           
           <nav className="flex items-center gap-2 sm:gap-4">

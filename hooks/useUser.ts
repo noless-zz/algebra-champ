@@ -4,7 +4,8 @@ import {
     getDoc, 
     setDoc, 
     updateDoc,
-    increment
+    increment,
+    deleteDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config.ts';
 
@@ -36,6 +37,43 @@ export function useUser() {
         return;
     }
     setLoading(true);
+
+    // --- START: User data migration for name change ---
+    const OLD_USERNAME = 'הורוביץ מעין';
+    const NEW_USERNAME = 'הורוביץ מעיין';
+
+    if (username === NEW_USERNAME) {
+        const newUserDocRef = doc(db, USERS_COLLECTION, NEW_USERNAME);
+        const newUserDocSnap = await getDoc(newUserDocRef);
+
+        // If the new username document doesn't exist, check if we need to migrate from the old one.
+        if (!newUserDocSnap.exists()) {
+            const oldUserDocRef = doc(db, USERS_COLLECTION, OLD_USERNAME);
+            const oldUserDocSnap = await getDoc(oldUserDocRef);
+
+            if (oldUserDocSnap.exists()) {
+                console.log(`Migrating user data from "${OLD_USERNAME}" to "${NEW_USERNAME}".`);
+                const oldUserData = oldUserDocSnap.data();
+                try {
+                    // 1. Create the new document with the old data.
+                    await setDoc(newUserDocRef, oldUserData);
+                    console.log(`Successfully created new document for "${NEW_USERNAME}".`);
+                    
+                    // 2. Delete the old document.
+                    await deleteDoc(oldUserDocRef);
+                    console.log(`Successfully deleted old document for "${OLD_USERNAME}".`);
+                } catch (migrationError) {
+                    console.error("Error during user data migration:", migrationError);
+                    // In case of error, we halt the login process to avoid inconsistencies.
+                    setLoading(false);
+                    return;
+                }
+            }
+        }
+    }
+    // --- END: User data migration ---
+
+
     const userDocRef = doc(db, USERS_COLLECTION, username);
     const userDocSnap = await getDoc(userDocRef);
 

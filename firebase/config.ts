@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import * as firebaseApp from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { initializeFirestore, CACHE_SIZE_UNLIMITED, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 
@@ -13,7 +13,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase, ensuring it's only done once.
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// Fix: Using namespace import for firebase/app to fix module resolution errors.
+const app = !firebaseApp.getApps().length ? firebaseApp.initializeApp(firebaseConfig) : firebaseApp.getApp();
 const auth = getAuth(app);
 
 // Initialize Firestore with settings for offline persistence and cache size.

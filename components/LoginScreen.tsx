@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { LogoIcon } from './icons.tsx';
 import { userList } from '../users.ts';
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, onGuestLogin }) {
   const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
 
   const initials = useMemo(() => {
@@ -59,6 +59,17 @@ export default function LoginScreen({ onLogin }) {
                 </button>
               ))}
             </div>
+            <div className="relative flex py-5 items-center">
+              <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+              <span className="flex-shrink mx-4 text-gray-500 dark:text-gray-400">או</span>
+              <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <button
+              onClick={onGuestLogin}
+              className="font-semibold text-indigo-500 hover:text-indigo-400"
+            >
+              כניסה כאורח
+            </button>
           </>
         ) : (
           <>

@@ -11,7 +11,7 @@ import { auth } from './firebase/config.ts';
 import { signInAnonymously } from 'firebase/auth';
 
 export default function App() {
-  const { user, loading, login, logout, updateUser } = useUser();
+  const { user, loading, login, logout, updateUser, loginAsGuest } = useUser();
   const [view, setView] = React.useState(View.Dashboard);
   const [isAuthenticating, setIsAuthenticating] = React.useState(true);
 
@@ -25,6 +25,10 @@ export default function App() {
         setIsAuthenticating(false);
       });
   }, []);
+  
+  const handleGuestLogin = React.useCallback(() => {
+      loginAsGuest();
+  }, [loginAsGuest]);
 
   const handleNavigate = React.useCallback((newView) => {
     setView(newView);
@@ -57,7 +61,7 @@ export default function App() {
 
   // If not loading and no user, show Auth screen
   if (!user) {
-    return <LoginScreen onLogin={login} />;
+    return <LoginScreen onLogin={login} onGuestLogin={handleGuestLogin} />;
   }
 
   // If logged in, show the main app

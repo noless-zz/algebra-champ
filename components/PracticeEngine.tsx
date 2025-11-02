@@ -40,8 +40,8 @@ const PracticeTriangleDrawing = ({
                 </>}
     
                 {showAngleTicks && <>
-                     <path d="M 18,90 A 8 8 0 0 1 13.58,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
-                     <path d="M 82,90 A 8 8 0 0 0 86.42,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                     <path d="M 16,90 A 6 6 0 0 1 12.7,84.6" fill="none" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.2" />
+                     <path d="M 84,90 A 6 6 0 0 0 87.3,84.6" fill="none" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.2" />
                 </>}
 
                 {showMedianFromB && <>
@@ -117,6 +117,42 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
     
     const [sessionScore, setSessionScore] = useState(0);
     const [sessionExercises, setSessionExercises] = useState(0);
+    const [isSuperscriptMode, setIsSuperscriptMode] = useState(false);
+
+    const numberToSuperscript = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+        '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    };
+
+    const handleAnswerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value: newValue, selectionStart } = e.target;
+        const oldValue = userAnswer;
+
+        if (!isSuperscriptMode || newValue.length <= oldValue.length || !selectionStart) {
+            setUserAnswer(newValue);
+            return;
+        }
+
+        // In superscript mode & text was added.
+        const addedChar = newValue[selectionStart - 1];
+
+        if (numberToSuperscript[addedChar]) {
+            const superscript = numberToSuperscript[addedChar];
+            // Reconstruct the string with the superscript character
+            const finalValue = newValue.substring(0, selectionStart - 1) + superscript + newValue.substring(selectionStart);
+            setUserAnswer(finalValue);
+            
+            // Restore cursor position after state update
+            const input = e.target;
+            setTimeout(() => {
+                input.selectionStart = selectionStart;
+                input.selectionEnd = selectionStart;
+            }, 0);
+        } else {
+            setUserAnswer(newValue);
+        }
+    };
+
 
     const handleTopicToggle = (topic: string) => {
         setSelectedTopics(prev => 
@@ -141,6 +177,7 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
         setShowFinalAnswer(false);
         setExplanation(null);
         setIsFetchingExplanation(false);
+        setIsSuperscriptMode(false);
     };
     
     const getHintForQuestion = (q: any) => {
@@ -337,16 +374,34 @@ export default function PracticeEngine({ updateUser }: {updateUser: (scoreToAdd:
                 
                 <form onSubmit={handleAnswerSubmit}>
                     {question.answerFormat === AnswerFormat.TextInput ? (
-                        <input
-                            type="text"
-                            value={userAnswer}
-                            onChange={(e) => setUserAnswer(e.target.value)}
-                            disabled={showFinalAnswer}
-                            placeholder="הקלד את תשובתך..."
-                            dir="ltr"
-                            className="w-full text-center px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-lg text-2xl font-mono text-gray-900 dark:text-gray-100 disabled:opacity-70"
-                            autoComplete="off"
-                        />
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={userAnswer}
+                                    onChange={handleAnswerChange}
+                                    disabled={showFinalAnswer}
+                                    placeholder="הקלד את תשובתך..."
+                                    dir="ltr"
+                                    className="flex-grow w-full text-center px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-lg text-2xl font-mono text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                                    autoComplete="off"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSuperscriptMode(prev => !prev)}
+                                    disabled={showFinalAnswer}
+                                    title="הפעל/כבה מצב חזקה"
+                                    className={`px-4 py-3 rounded-lg font-bold text-2xl disabled:opacity-50 transition-colors ${isSuperscriptMode ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500'}`}
+                                >
+                                    x<sup className="-top-1">y</sup>
+                                </button>
+                            </div>
+                             {(question.topic === Topic.SHORT_MULTIPLICATION || (question.topic === Topic.DISTRIBUTIVE_PROPERTY && question.difficulty === Difficulty.HARD)) && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+                                    כדי להקליד חזקה, לחצו על <span className="font-mono font-bold mx-1 px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-600">xʸ</span>, הקלידו את המעריך, ולחצו שוב כדי לחזור לכתיבה רגילה.
+                                </p>
+                            )}
+                        </div>
                     ) : (
                          <div className="grid grid-cols-2 gap-4">
                             {question.options.map((option: string, index: number) => (

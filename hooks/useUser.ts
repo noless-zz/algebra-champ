@@ -127,6 +127,21 @@ export function useUser() {
     localStorage.setItem(CURRENT_USER_KEY, username);
     await loadUser(username);
   }, [loadUser]);
+  
+  const loginAsGuest = useCallback(() => {
+    setUser({
+        username: 'אורח',
+        score: 0,
+        completedExercises: 0,
+        isGuest: true,
+        uid: 'guest',
+        dailyStats: { score: 0, periodId: 'none' },
+        weeklyStats: { score: 0, periodId: 'none', scoresBySubject: {} },
+        scoresBySubject: {},
+        lastActivity: new Date().toISOString()
+    });
+    setLoading(false);
+  }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(CURRENT_USER_KEY);
@@ -135,6 +150,18 @@ export function useUser() {
 
   const updateUser = useCallback(async (scoreToAdd: number, exercisesToAdd: number, topic: string) => {
     if (!user || !user.username) return;
+
+    if (user.isGuest) {
+        setUser(currentUser => {
+            if (!currentUser) return null;
+            return {
+                ...currentUser,
+                score: currentUser.score + scoreToAdd,
+                completedExercises: currentUser.completedExercises + exercisesToAdd,
+            };
+        });
+        return;
+    }
 
     const todayId = getTodayId();
     const weekId = getWeekId();
@@ -187,5 +214,5 @@ export function useUser() {
     }
   }, [user, loadUser]);
 
-  return { user, loading, login, logout, updateUser };
+  return { user, loading, login, logout, updateUser, loginAsGuest };
 }

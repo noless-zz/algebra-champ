@@ -102,7 +102,7 @@ const generateDistributiveProperty = (difficulty: string) => {
     const x2_coeff = a*c;
     const x_coeff = a*d + b*c;
     const const_term = b*d;
-    answer = `${x2_coeff === 1 ? '' : x2_coeff}x^2 + ${x_coeff}x + ${const_term}`;
+    answer = `${x2_coeff === 1 ? '' : x2_coeff}x² + ${x_coeff}x + ${const_term}`;
     answer = answer.replace(/\s/g, '');
   }
 
@@ -134,19 +134,19 @@ const generateShortMultiplication = (difficulty: string) => {
   switch(type) {
     case 1: // (ax+b)^2
       formulaType = '(a+b)^2';
-      expression = `(${a === 1 ? '' : a}${x} + ${b})^2`;
+      expression = `(${a === 1 ? '' : a}${x} + ${b})²`;
       const x2_coeff1 = a*a;
       const x_coeff1 = 2*a*b;
       const const_term1 = b*b;
-      answer = `${x2_coeff1 === 1 ? '' : x2_coeff1}x^2 + ${x_coeff1}x + ${const_term1}`;
+      answer = `${x2_coeff1 === 1 ? '' : x2_coeff1}x² + ${x_coeff1}x + ${const_term1}`;
       break;
     case 2: // (ax-b)^2
       formulaType = '(a-b)^2';
-      expression = `(${a === 1 ? '' : a}${x} - ${b})^2`;
+      expression = `(${a === 1 ? '' : a}${x} - ${b})²`;
       const x2_coeff2 = a*a;
       const x_coeff2 = 2*a*b;
       const const_term2 = b*b;
-      answer = `${x2_coeff2 === 1 ? '' : x2_coeff2}x^2 - ${x_coeff2}x + ${const_term2}`;
+      answer = `${x2_coeff2 === 1 ? '' : x2_coeff2}x² - ${x_coeff2}x + ${const_term2}`;
       break;
     case 3: // (ax+b)(ax-b)
     default:
@@ -154,7 +154,7 @@ const generateShortMultiplication = (difficulty: string) => {
       expression = `(${a === 1 ? '' : a}${x} + ${b})(${a === 1 ? '' : a}${x} - ${b})`;
       const x2_coeff3 = a*a;
       const const_term3 = b*b;
-      answer = `${x2_coeff3 === 1 ? '' : x2_coeff3}x^2 - ${const_term3}`;
+      answer = `${x2_coeff3 === 1 ? '' : x2_coeff3}x² - ${const_term3}`;
       break;
   }
   

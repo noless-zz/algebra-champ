@@ -79,8 +79,8 @@ const TriangleDrawing = ({
             {/* Angle ticks for Isosceles */}
             {showAngleTicks &&
                 <>
-                     <path d="M 18,90 A 8 8 0 0 1 13.58,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
-                     <path d="M 82,90 A 8 8 0 0 0 86.42,82.85" fill="none" className="stroke-green-500" strokeWidth="1.5" />
+                     <path d="M 16,90 A 6 6 0 0 1 12.7,84.6" fill="none" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.2" />
+                     <path d="M 84,90 A 6 6 0 0 0 87.3,84.6" fill="none" className="stroke-green-500 dark:stroke-green-400" strokeWidth="1.2" />
                 </>
             }
             
@@ -270,7 +270,7 @@ const IsoscelesTriangle = () => (
                 <TriangleDrawing showSideTicks={true} showAngleTicks={true} />
             </div>
             <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-md text-center shadow-inner">
-                <p className="font-mono text-xl">אם <span className="text-blue-500">AB</span> = <span className="text-blue-500">AC</span>, אז <span className="text-green-500">∠B</span> = <span className="text-green-500">∠C</span></p>
+                <p className="font-mono text-xl">אם <span dir="ltr" className="text-blue-500 inline-block">AB = AC</span>, אז <span dir="ltr" className="text-green-500 inline-block">∠B = ∠C</span></p>
             </div>
         </div>
         

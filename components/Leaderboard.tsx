@@ -145,8 +145,16 @@ export default function Leaderboard({ currentUser }) {
           }
       });
       
+      if (currentUser?.isGuest) {
+        fullList.push({
+            ...currentUser,
+            uid: 'guest-user',
+            isInactive: false,
+        });
+      }
+      
       return fullList.sort((a, b) => b.score - a.score);
-  }, [allUsers, loading]);
+  }, [allUsers, loading, currentUser]);
 
 
   const getRankColor = (rank) => {

@@ -7,10 +7,24 @@ import Dashboard from './components/Dashboard.tsx';
 import LearnSection from './components/LearnSection.tsx';
 import PracticeEngine from './components/PracticeEngine.tsx';
 import Leaderboard from './components/Leaderboard.tsx';
+import { auth } from './firebase/config.ts';
+import { signInAnonymously } from 'firebase/auth';
 
 export default function App() {
   const { user, loading, login, logout, updateUser } = useUser();
   const [view, setView] = React.useState(View.Dashboard);
+  const [isAuthenticating, setIsAuthenticating] = React.useState(true);
+
+  React.useEffect(() => {
+    // Sign in the user anonymously to gain permissions for Firestore.
+    signInAnonymously(auth)
+      .catch((error) => {
+        console.error("Anonymous sign-in failed:", error);
+      })
+      .finally(() => {
+        setIsAuthenticating(false);
+      });
+  }, []);
 
   const handleNavigate = React.useCallback((newView) => {
     setView(newView);
@@ -32,8 +46,8 @@ export default function App() {
     }
   };
   
-  // Handle initial loading state
-  if (loading) {
+  // Handle initial loading state for both authentication and user data.
+  if (loading || isAuthenticating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <p className="text-xl font-semibold">טוען...</p>
